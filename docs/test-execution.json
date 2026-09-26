@@ -1,18 +1,20 @@
 {
-  "generatedAt": "26 September 2026, 12:01 IST",
+  "generatedAt": "26 September 2026, 12:20 IST",
   "codeFingerprint": "e6f5aac8d59d6720f586fbbf685aea26a99b1113296f2a5b4f88003ceaa1ce95",
   "caseCounts": {
-    "PASS": 136,
+    "PASS": 139,
     "FAIL": 0,
-    "NOT RUN": 15
+    "NOT RUN": 12
   },
   "testCounts": {
     "API": 33,
-    "UI": 14
+    "UI": 14,
+    "LIVE": 3
   },
   "apiRunStartedAt": "2026-09-26T06:22:25.206000+00:00",
   "browserRunStartedAt": "2026-09-26T06:29:45.046Z",
-  "externalEmail": "Not configured or externally verified at this review",
+  "gmailRunStartedAt": "2026-09-26T06:47:31.042Z",
+  "externalEmail": "Verified: Gmail SMTP accepted both messages; both reached Gmail INBOX; their codes completed verification and password reset.",
   "tests": [
     {
       "id": "API-01",
@@ -389,6 +391,30 @@
       "status": "passed",
       "source": "tests/workflows.spec.ts:123",
       "durationMs": 2625
+    },
+    {
+      "id": "LIVE-01",
+      "kind": "LIVE",
+      "name": "Gmail SMTP authentication over TLS",
+      "status": "passed",
+      "source": "docs/gmail-execution.json",
+      "durationMs": null
+    },
+    {
+      "id": "LIVE-02",
+      "kind": "LIVE",
+      "name": "Live Gmail verification email, one-time code, and approval gate",
+      "status": "passed",
+      "source": "docs/gmail-execution.json",
+      "durationMs": null
+    },
+    {
+      "id": "LIVE-03",
+      "kind": "LIVE",
+      "name": "Live Gmail reset email, new password, session revocation, and code replay",
+      "status": "passed",
+      "source": "docs/gmail-execution.json",
+      "durationMs": null
     }
   ]
 }

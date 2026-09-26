@@ -1,0 +1,97 @@
+{
+  "startedAt": "2026-09-26T06:47:31.042Z",
+  "finishedAt": "2026-09-26T06:47:50.073Z",
+  "environment": "Local app with real Gmail SMTP and read-only IMAP of the two uniquely addressed test messages",
+  "checks": [
+    {
+      "name": "Gmail SMTP TLS connection and authentication",
+      "status": "passed"
+    },
+    {
+      "name": "Read-only Gmail inbox access for test message verification",
+      "status": "passed"
+    },
+    {
+      "name": "Real SMTP signup creates an unverified pending account without session or local inbox link",
+      "status": "passed"
+    },
+    {
+      "name": "Verification email received in Gmail INBOX with usable six-digit code",
+      "status": "passed"
+    },
+    {
+      "name": "Inbox verification code verifies the account",
+      "status": "passed"
+    },
+    {
+      "name": "Reused verification code rejected",
+      "status": "passed"
+    },
+    {
+      "name": "Verified account still requires manager approval",
+      "status": "passed"
+    },
+    {
+      "name": "Password-reset email received in Gmail INBOX with usable six-digit code",
+      "status": "passed"
+    },
+    {
+      "name": "Verification code cannot reset the password",
+      "status": "passed"
+    },
+    {
+      "name": "Inbox reset code changes the password",
+      "status": "passed"
+    },
+    {
+      "name": "Password reset revokes the previous session",
+      "status": "passed"
+    },
+    {
+      "name": "Old password rejected after reset",
+      "status": "passed"
+    },
+    {
+      "name": "New password signs in and accesses the authenticated profile",
+      "status": "passed"
+    },
+    {
+      "name": "Reused password-reset code rejected",
+      "status": "passed"
+    },
+    {
+      "name": "Temporary test account and its codes removed; existing accounts and inventory preserved",
+      "status": "passed"
+    }
+  ],
+  "externalEmail": "Verified: Gmail SMTP accepted both messages; both reached Gmail INBOX; their codes completed verification and password reset.",
+  "success": true,
+  "codeFingerprint": "e6f5aac8d59d6720f586fbbf685aea26a99b1113296f2a5b4f88003ceaa1ce95",
+  "scope": "Two messages addressed to a unique plus-alias of the configured Gmail sender. Read-only IMAP fetched only those test messages. A temporary staff account was activated as a fixture to test login and reset, then deleted with its codes. Existing user accounts and inventory were preserved. This checks the configured Gmail inbox, not every recipient provider.",
+  "tests": [
+    {
+      "id": "LIVE-01",
+      "kind": "LIVE",
+      "name": "Gmail SMTP authentication over TLS",
+      "status": "passed",
+      "source": "docs/gmail-execution.json",
+      "durationMs": null
+    },
+    {
+      "id": "LIVE-02",
+      "kind": "LIVE",
+      "name": "Live Gmail verification email, one-time code, and approval gate",
+      "status": "passed",
+      "source": "docs/gmail-execution.json",
+      "durationMs": null
+    },
+    {
+      "id": "LIVE-03",
+      "kind": "LIVE",
+      "name": "Live Gmail reset email, new password, session revocation, and code replay",
+      "status": "passed",
+      "source": "docs/gmail-execution.json",
+      "durationMs": null
+    }
+  ]
+}

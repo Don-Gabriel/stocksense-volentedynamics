@@ -301,23 +301,23 @@
         "preconditions": "Owner locally configures Gmail app password.",
         "steps": "Run node scripts/check-email.cjs.",
         "expected": "Authenticated TLS connection; no credentials printed and no message sent.",
-        "evidence": null
+        "evidence": "LIVE:SMTP authentication"
       },
       {
         "id": "MAIL-15",
         "scenario": "Real Gmail inbox verification",
         "preconditions": "Gmail configured; recipient controlled by tester.",
-        "steps": "Register real address; check inbox/spam; enter received code in app.",
-        "expected": "External email arrives; verification and approval work.",
-        "evidence": null
+        "steps": "Register a temporary address; retrieve its inbox code; submit verification; retry login and code.",
+        "expected": "Email reaches INBOX; code verifies once; manager approval remains required.",
+        "evidence": "LIVE:verification email"
       },
       {
         "id": "MAIL-16",
         "scenario": "Real Gmail reset delivery",
-        "preconditions": "Approved real account and configured sender.",
-        "steps": "Use Forgot password; complete reset using external inbox.",
-        "expected": "Correct reset message arrives and code works once.",
-        "evidence": null
+        "preconditions": "Active temporary test account and configured sender.",
+        "steps": "Request reset; retrieve inbox code; reset; try old/new passwords, old session and code reuse.",
+        "expected": "Code works once; new password signs in; old password and session fail.",
+        "evidence": "LIVE:reset email"
       },
       {
         "id": "MAIL-17",
