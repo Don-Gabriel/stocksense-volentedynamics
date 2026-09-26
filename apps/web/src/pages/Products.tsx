@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowRight, Layers3, Package, Pencil, Plus, Search } from 'lucide-react';
 import { useWorkspace } from '../lib/context';
+import { useSearchText } from '../lib/useSearchText';
 import { money, quantity } from '../lib/api';
 import { Product, units } from '../types';
 import { Button, Empty, PageTitle, Pager } from '../components/ui';
@@ -10,6 +11,10 @@ export function Products() {
   const { catalog, user, warehouseId } = useWorkspace();
   const [params, setParams] = useSearchParams();
   const search = params.get('search') || '';
+  const [searchText, setSearchText] = useSearchText(search, (value) => {
+    setParams(value ? { search: value } : {});
+    setPage(1);
+  });
   const [category, setCategory] = useState(''),
     [showArchived, setArchived] = useState(false),
     [page, setPage] = useState(1),
@@ -62,11 +67,8 @@ export function Products() {
             <input
               aria-label="Search products"
               placeholder="Search products or SKU…"
-              value={search}
-              onChange={(e) => {
-                setParams(e.target.value ? { search: e.target.value } : {});
-                setPage(1);
-              }}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
             />
           </div>
           <div className="toolbar-filters">

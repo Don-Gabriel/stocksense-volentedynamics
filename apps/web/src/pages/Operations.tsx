@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { api, date, quantity, query, refresh } from '../lib/api';
 import { useWorkspace } from '../lib/context';
+import { useSearchText } from '../lib/useSearchText';
 import {
   Kind,
   kindNames,
@@ -67,6 +68,7 @@ export function Operations() {
       return next;
     });
   }
+  const [searchText, setSearchText] = useSearchText(search, (value) => change('search', value));
   return (
     <>
       <PageTitle
@@ -100,8 +102,8 @@ export function Operations() {
             <input
               aria-label="Search operations"
               placeholder="Search reference, contact, or product…"
-              value={search}
-              onChange={(e) => change('search', e.target.value)}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
             />
           </div>
           <div className="toolbar-filters">

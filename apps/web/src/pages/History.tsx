@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowRight, BookOpen, Search } from 'lucide-react';
 import { useWorkspace } from '../lib/context';
+import { useSearchText } from '../lib/useSearchText';
 import { api, date, quantity, query } from '../lib/api';
 import { kindNames, kindPlurals, Ledger, Page, units } from '../types';
 import { Badge, Empty, ErrorBox, Loading, PageTitle, Pager } from '../components/ui';
@@ -47,6 +48,9 @@ export function History() {
       return next;
     });
   }
+  const [searchText, setSearchText] = useSearchText(search, (value) => change('search', value));
+  const [fromText, setFromText] = useSearchText(from, (value) => change('from', value));
+  const [toText, setToText] = useSearchText(to, (value) => change('to', value));
   return (
     <>
       <PageTitle
@@ -71,8 +75,8 @@ export function History() {
             <input
               aria-label="Search history"
               placeholder="Search reference, contact, or product…"
-              value={search}
-              onChange={(e) => change('search', e.target.value)}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
             />
           </div>
           <div className="toolbar-filters">
@@ -110,8 +114,8 @@ export function History() {
             <input
               type="date"
               aria-label="History from date"
-              value={from}
-              onChange={(e) => change('from', e.target.value)}
+              value={fromText}
+              onChange={(e) => setFromText(e.target.value)}
             />
           </label>
           <label>
@@ -119,8 +123,8 @@ export function History() {
             <input
               type="date"
               aria-label="History to date"
-              value={to}
-              onChange={(e) => change('to', e.target.value)}
+              value={toText}
+              onChange={(e) => setToText(e.target.value)}
             />
           </label>
           <select

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ClipboardCheck, Info, Plus, Search } from 'lucide-react';
 import { useWorkspace } from '../lib/context';
+import { useSearchText } from '../lib/useSearchText';
 import { api, money, quantity, query } from '../lib/api';
 import { Page, StockRow, units } from '../types';
 import { Badge, Button, Empty, ErrorBox, Loading, PageTitle, Pager } from '../components/ui';
@@ -37,6 +38,7 @@ export function Stock() {
       return next;
     });
   }
+  const [searchText, setSearchText] = useSearchText(search, (value) => change('search', value));
   return (
     <>
       <PageTitle
@@ -64,8 +66,8 @@ export function Stock() {
             <input
               aria-label="Search stock"
               placeholder="Search product name or SKU…"
-              value={search}
-              onChange={(e) => change('search', e.target.value)}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
             />
           </div>
           <div className="toolbar-filters">
