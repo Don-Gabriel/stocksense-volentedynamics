@@ -17,9 +17,14 @@ export class ApiExceptionFilter implements ExceptionFilter {
     const response = host.switchToHttp().getResponse<Response>();
     let status = 500;
     let message: string | string[] = 'Something went wrong. Please try again.';
+    let extra: { code?: string; email?: string } = {};
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const detail = exception.getResponse();
+      if (typeof detail === 'object') {
+        const data = detail as { code?: string; email?: string };
+        extra = { code: data.code, email: data.email };
+      }
       message =
         typeof detail === 'string' ? detail : (detail as { message: string | string[] }).message;
     } else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
@@ -38,7 +43,7 @@ export class ApiExceptionFilter implements ExceptionFilter {
     }
     if (status === 500)
       console.error(exception instanceof Error ? exception.message : 'Unhandled server error');
-    response.status(status).json({ statusCode: status, message });
+    response.status(status).json({ statusCode: status, message, ...extra });
   }
 }
 

@@ -147,7 +147,12 @@ export class InventoryService {
         );
     } else if (dto.contactId)
       throw new BadRequestException('Internal operations do not need an external contact.');
-    if (dto.responsibleId && !(await tx.user.findUnique({ where: { id: dto.responsibleId } })))
+    if (
+      dto.responsibleId &&
+      !(await tx.user.findFirst({
+        where: { id: dto.responsibleId, status: 'ACTIVE', emailVerifiedAt: { not: null } },
+      }))
+    )
       throw new BadRequestException('Choose a valid responsible user.');
     const products = await tx.product.findMany({
       where: { id: { in: dto.lines.map((x) => x.productId) }, active: true },

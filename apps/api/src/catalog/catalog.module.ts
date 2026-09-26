@@ -10,8 +10,8 @@ class CatalogController {
     private readonly db: Database,
     private readonly catalog: CatalogService,
   ) {}
-  @Get() all() {
-    return this.catalog.all();
+  @Get() all(@Req() req: AuthRequest) {
+    return this.catalog.all(req.user);
   }
   @Manager() @Post('products') product(@Body() dto: ProductDto, @Req() req: AuthRequest) {
     return this.catalog.product(dto, req.user);

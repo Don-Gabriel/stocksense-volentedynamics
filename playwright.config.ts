@@ -5,7 +5,11 @@ export default defineConfig({
   workers: 1,
   timeout: 30000,
   expect: { timeout: 7000 },
-  reporter: [['list'], ['html', { open: 'never' }]],
+  reporter: [
+    ['list'],
+    ['html', { open: 'never' }],
+    ['json', { outputFile: '.local/browser-test-results.json' }],
+  ],
   use: {
     baseURL: 'http://127.0.0.1:5174',
     trace: 'retain-on-failure',

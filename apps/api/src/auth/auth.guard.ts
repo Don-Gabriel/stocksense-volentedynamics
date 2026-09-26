@@ -36,7 +36,12 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException('Your session expired. Please sign in again.');
     }
     const user = await this.db.user.findUnique({ where: { id: payload.sub } });
-    if (!user || user.tokenVersion !== payload.version)
+    if (
+      !user ||
+      !user.emailVerifiedAt ||
+      user.status !== 'ACTIVE' ||
+      user.tokenVersion !== payload.version
+    )
       throw new UnauthorizedException('Please sign in again.');
     req.user = {
       id: user.id,

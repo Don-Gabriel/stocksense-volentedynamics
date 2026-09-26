@@ -10,6 +10,15 @@ enum Role {
   MANAGER
   STAFF
 }
+enum AccountStatus {
+  PENDING
+  ACTIVE
+  DISABLED
+}
+enum CodePurpose {
+  RESET_PASSWORD
+  VERIFY_EMAIL
+}
 enum OperationType {
   RECEIPT
   DELIVERY
@@ -41,6 +50,8 @@ model User {
   name String
   passwordHash String
   role Role @default(STAFF)
+  status AccountStatus @default(PENDING)
+  emailVerifiedAt DateTime?
   tokenVersion Int @default(0)
   createdAt DateTime @default(now())
   resets PasswordReset[]
@@ -53,11 +64,13 @@ model PasswordReset {
   userId String
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   codeHash String
+  purpose CodePurpose @default(RESET_PASSWORD)
   expiresAt DateTime
   attempts Int @default(0)
   consumedAt DateTime?
   createdAt DateTime @default(now())
   @@index([userId, createdAt])
+  @@index([userId, purpose, createdAt])
 }
 model Category {
   id String @id @default(cuid())

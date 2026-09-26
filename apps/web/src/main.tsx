@@ -15,6 +15,8 @@ import { Profile } from './pages/Profile';
 import { Button, Empty } from './components/ui';
 import './styles.css';
 import './form-layout.css';
+import '@fontsource-variable/inter';
+import './usability.css';
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
@@ -22,6 +24,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Routes>
           <Route path="/login" element={<AuthPage />} />
           <Route path="/signup" element={<AuthPage initial="register" />} />
+          <Route path="/forgot-password" element={<AuthPage initial="forgot" />} />
+          <Route path="/reset-password" element={<AuthPage initial="reset" />} />
+          <Route path="/verify-email" element={<AuthPage initial="verify" />} />
           <Route element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="products" element={<Products />} />

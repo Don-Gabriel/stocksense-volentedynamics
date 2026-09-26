@@ -12,6 +12,7 @@ const env = {
   PORT: '3002',
   WEB_ORIGIN: 'http://127.0.0.1:5174',
   DEMO_PASSWORD: 'StockSense!2026',
+  MAIL_MODE: 'local',
 };
 async function main() {
   execFileSync(process.execPath, [require.resolve('prisma/build/index.js'), 'migrate', 'deploy'], {

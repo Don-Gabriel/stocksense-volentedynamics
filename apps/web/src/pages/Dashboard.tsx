@@ -16,7 +16,7 @@ import { api, date, quantity, query } from '../lib/api';
 import { useWorkspace } from '../lib/context';
 import { Dashboard as DashboardData, kindPlurals, statusNames, units } from '../types';
 import { Badge, Button, Empty, ErrorBox, Loading, PageTitle } from '../components/ui';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 const icons = {
   RECEIPT: ArrowDownToLine,
   DELIVERY: ArrowUpFromLine,
@@ -29,6 +29,14 @@ export function Dashboard() {
   const [type, setType] = useState(''),
     [status, setStatus] = useState(''),
     [locationId, setLocation] = useState('');
+  useEffect(() => {
+    if (
+      locationId &&
+      warehouseId &&
+      !catalog.locations.some((l) => l.id === locationId && l.warehouseId === warehouseId)
+    )
+      setLocation('');
+  }, [warehouseId, locationId, catalog.locations]);
   const scope = { warehouseId, categoryId, locationId, type, status };
   const operationLink = (selectedType = type, late = '') =>
     '/operations?' + query({ ...scope, type: selectedType, late });

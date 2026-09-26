@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useIsFetching, useMutation, useQuery } from '@tanstack/react-query';
 import {
   Activity,
   ArrowDownToLine,
@@ -21,7 +21,7 @@ import {
   Warehouse as WarehouseIcon,
   X,
 } from 'lucide-react';
-import { api, queryClient } from '../lib/api';
+import { api, ApiError, queryClient } from '../lib/api';
 import { OperationDraft, WorkspaceContext } from '../lib/context';
 import { Catalog, Operation, User } from '../types';
 import { Button, ErrorBox, Loading } from './ui';
@@ -41,11 +41,76 @@ const operations = [
 export function Layout() {
   const navigate = useNavigate(),
     location = useLocation();
-  const [warehouseId, setWarehouse] = useState('');
+  const [warehouseId, updateWarehouse] = useState(
+    () => sessionStorage.getItem('stocksense:warehouse') || '',
+  );
+  const setWarehouse = (id: string) => {
+    updateWarehouse(id);
+    sessionStorage.setItem('stocksense:warehouse', id);
+    const next = new URLSearchParams(location.search);
+    next.delete('warehouseId');
+    next.delete('locationId');
+    next.delete('page');
+    navigate({ pathname: location.pathname, search: next.toString() });
+  };
   const [mobile, setMobile] = useState(false);
+  const sidebar = useRef<HTMLElement>(null);
+  const toastTimer = useRef<number>(undefined);
+  const fetching = useIsFetching();
   const [draft, setDraft] = useState<OperationDraft | null>(null);
   const [toast, setToast] = useState('');
   const [search, setSearch] = useState('');
+  useEffect(() => {
+    const expired = () => {
+      queryClient.clear();
+      navigate('/login', {
+        replace: true,
+        state: { message: 'Your session has ended. Please sign in again.' },
+      });
+    };
+    window.addEventListener('stocksense:expired', expired);
+    return () => {
+      window.removeEventListener('stocksense:expired', expired);
+      window.clearTimeout(toastTimer.current);
+    };
+  }, [navigate]);
+  useEffect(() => {
+    setMobile(false);
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [location.pathname]);
+  useEffect(() => {
+    if (!mobile) return;
+    const previous = document.activeElement as HTMLElement;
+    const oldOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    sidebar.current?.querySelector<HTMLElement>('button,a')?.focus();
+    const key = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setMobile(false);
+      }
+      if (e.key !== 'Tab') return;
+      const items = Array.from(
+        sidebar.current?.querySelectorAll<HTMLElement>('a,button:not(:disabled)') || [],
+      ).filter((x) => x.getClientRects().length);
+      const first = items[0],
+        last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last?.focus();
+      }
+      if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first?.focus();
+      }
+    };
+    window.addEventListener('keydown', key);
+    return () => {
+      document.body.style.overflow = oldOverflow;
+      window.removeEventListener('keydown', key);
+      previous?.focus();
+    };
+  }, [mobile]);
   const me = useQuery({ queryKey: ['me'], queryFn: () => api<User>('/auth/me') });
   const catalog = useQuery({
     queryKey: ['catalog'],
@@ -55,16 +120,26 @@ export function Layout() {
   const logout = useMutation({
     mutationFn: () => api('/auth/logout', 'POST'),
     onSuccess: () => {
+      sessionStorage.removeItem('stocksense:warehouse');
       queryClient.clear();
       navigate('/login');
     },
   });
   const notify = (message: string) => {
     setToast(message);
-    window.setTimeout(() => setToast((current) => (current === message ? '' : current)), 6000);
+    window.clearTimeout(toastTimer.current);
+    toastTimer.current = window.setTimeout(() => setToast(''), 6000);
   };
   if (me.isPending) return <Loading />;
-  if (!me.data) return <Navigate to="/login" replace />;
+  if (!me.data)
+    return me.error instanceof ApiError && me.error.status === 401 ? (
+      <Navigate to="/login" replace />
+    ) : (
+      <div className="page">
+        <ErrorBox error={me.error} />
+        <Button onClick={() => me.refetch()}>Retry connection</Button>
+      </div>
+    );
   if (catalog.isPending) return <Loading />;
   if (!catalog.data)
     return (
@@ -75,6 +150,17 @@ export function Layout() {
     );
   const user = me.data;
   const currentKind = new URLSearchParams(location.search).get('type');
+  const detail = location.pathname.startsWith('/operations/');
+  const pageName =
+    location.pathname === '/'
+      ? 'Overview'
+      : location.pathname === '/stock'
+        ? 'Stock on hand'
+        : location.pathname === '/history'
+          ? 'Move history'
+          : location.pathname.startsWith('/operations')
+            ? operations.find((x) => x.type === currentKind)?.label || 'All operations'
+            : location.pathname.slice(1).replace(/^./, (c) => c.toUpperCase());
   const nav = (to: string, label: string, Icon: typeof Package, active?: boolean) => (
     <NavLink
       key={label}
@@ -99,6 +185,9 @@ export function Layout() {
       }}
     >
       <div className="workspace">
+        <a className="skip-link" href="#main-content">
+          Skip to content
+        </a>
         {mobile && (
           <button
             className="sidebar-backdrop"
@@ -106,7 +195,21 @@ export function Layout() {
             onClick={() => setMobile(false)}
           />
         )}
-        <aside className={`sidebar ${mobile ? 'sidebar-open' : ''}`}>
+        <aside
+          ref={sidebar}
+          id="main-navigation"
+          aria-label="Workspace navigation"
+          className={`sidebar ${mobile ? 'sidebar-open' : ''}`}
+        >
+          {mobile && (
+            <button
+              className="mobile-nav-close"
+              aria-label="Close navigation"
+              onClick={() => setMobile(false)}
+            >
+              <X size={20} />
+            </button>
+          )}
           <Link className="brand" to="/">
             <span className="brand-mark">
               <Boxes size={25} />
@@ -126,6 +229,12 @@ export function Layout() {
             <span className="nav-section">WORKSPACE</span>
             {links.map((l) => nav(l.to, l.label, l.icon))}
             <span className="nav-section">OPERATIONS</span>
+            {nav(
+              '/operations',
+              'All operations',
+              ClipboardCheck,
+              (location.pathname === '/operations' && !currentKind) || detail,
+            )}
             {operations.map((l) =>
               nav(
                 `/operations?type=${l.type}`,
@@ -167,7 +276,7 @@ export function Layout() {
             <ErrorBox error={logout.error} />
           </div>
         </aside>
-        <div className="main-shell">
+        <div className="main-shell" inert={mobile || undefined}>
           <header className="topbar">
             <div className="topbar-left">
               <Button
@@ -175,20 +284,27 @@ export function Layout() {
                 size="icon"
                 className="mobile-menu"
                 aria-label="Open navigation"
+                aria-expanded={mobile}
+                aria-controls="main-navigation"
                 onClick={() => setMobile(true)}
               >
                 <Menu size={21} />
               </Button>
-              <span className="breadcrumb">
-                Workspace <span>/</span>{' '}
-                <strong>
-                  {location.pathname === '/'
-                    ? 'Overview'
-                    : location.pathname.startsWith('/operations')
-                      ? 'Operations'
-                      : location.pathname.slice(1).replace(/^./, (c) => c.toUpperCase())}
-                </strong>
-              </span>
+              <nav className="breadcrumb" aria-label="Breadcrumb">
+                {location.pathname !== '/' && (
+                  <>
+                    <Link to="/">Overview</Link>
+                    <span aria-hidden="true">/</span>
+                  </>
+                )}
+                {detail && (
+                  <>
+                    <Link to="/operations">Operations</Link>
+                    <span aria-hidden="true">/</span>
+                  </>
+                )}
+                <strong aria-current="page">{detail ? 'Operation details' : pageName}</strong>
+              </nav>
             </div>
             <div className="topbar-actions">
               <form
@@ -232,8 +348,13 @@ export function Layout() {
               </Link>
             </div>
           </header>
-          <main className="page">
-            <Outlet />
+          {fetching > 0 && (
+            <div className="fetch-progress" role="status" aria-label="Updating results" />
+          )}
+          <main className="page" id="main-content" tabIndex={-1}>
+            <div className="route-page" key={location.pathname}>
+              <Outlet />
+            </div>
           </main>
           <footer className="app-footer">
             <span>

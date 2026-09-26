@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft,
   ArrowRight,
@@ -30,10 +30,14 @@ import {
 } from '../types';
 import { Badge, Button, Empty, ErrorBox, Loading, Modal, PageTitle, Pager } from '../components/ui';
 export function Operations() {
+  const location = useLocation();
   const [params, setParams] = useSearchParams();
   const { warehouseId, catalog, newOperation, user } = useWorkspace();
-  const [view, setView] = useState('list');
-  const type = params.get('type') as Kind | null,
+  const view = params.get('view') === 'kanban' ? 'kanban' : 'list';
+  const setView = (value: string) => change('view', value);
+  const type = (
+      Object.keys(kindNames).includes(params.get('type') || '') ? params.get('type') : null
+    ) as Kind | null,
     status = params.get('status') || '',
     search = params.get('search') || '',
     page = Number(params.get('page') || 1),
@@ -160,7 +164,6 @@ export function Operations() {
                 className={view === 'list' ? 'selected' : ''}
                 onClick={() => {
                   setView('list');
-                  change('page', '1');
                 }}
               >
                 <List size={18} />
@@ -171,7 +174,6 @@ export function Operations() {
                 className={view === 'kanban' ? 'selected' : ''}
                 onClick={() => {
                   setView('kanban');
-                  change('page', '1');
                 }}
               >
                 <Columns3 size={18} />
@@ -209,7 +211,11 @@ export function Operations() {
                   {result.data.items.map((op) => (
                     <tr key={op.id}>
                       <td>
-                        <Link className="reference" to={`/operations/${op.id}`}>
+                        <Link
+                          className="reference"
+                          state={{ from: location.pathname + location.search }}
+                          to={`/operations/${op.id}`}
+                        >
                           {op.reference}
                         </Link>
                         <small>
@@ -246,7 +252,11 @@ export function Operations() {
                         <Badge status={op.status} />
                       </td>
                       <td>
-                        <Link to={`/operations/${op.id}`} aria-label={`Open ${op.reference}`}>
+                        <Link
+                          state={{ from: location.pathname + location.search }}
+                          to={`/operations/${op.id}`}
+                          aria-label={`Open ${op.reference}`}
+                        >
                           <ArrowRight size={16} />
                         </Link>
                       </td>
@@ -268,7 +278,12 @@ export function Operations() {
                     {result
                       .data!.items.filter((o) => o.status === s)
                       .map((op) => (
-                        <Link to={`/operations/${op.id}`} key={op.id} className="kanban-card">
+                        <Link
+                          state={{ from: location.pathname + location.search }}
+                          to={`/operations/${op.id}`}
+                          key={op.id}
+                          className="kanban-card"
+                        >
                           <span className="reference">{op.reference}</span>
                           <strong>
                             {op.contact?.name || op.destination?.name || 'Internal operation'}
@@ -318,12 +333,14 @@ export function Operations() {
   );
 }
 export function OperationDetail() {
+  const location = useLocation();
   const { id } = useParams();
   const { newOperation, notify, user } = useWorkspace();
   const navigate = useNavigate();
   const [cancel, setCancel] = useState(false);
   const result = useQuery({
     queryKey: ['operation', id],
+    placeholderData: undefined,
     queryFn: () => api<Operation>(`/operations/${id}`),
     refetchInterval: 20000,
   });
@@ -350,7 +367,14 @@ export function OperationDetail() {
     pending = mutation.isPending;
   return (
     <div className="operation-detail">
-      <Link className="back-link no-print" to={`/operations?type=${op.type}`}>
+      <Link
+        className="back-link no-print"
+        to={
+          location.state?.from?.startsWith('/operations')
+            ? location.state.from
+            : `/operations?type=${op.type}`
+        }
+      >
         <ArrowLeft size={15} />
         Back to {kindPlurals[op.type].toLowerCase()}
       </Link>

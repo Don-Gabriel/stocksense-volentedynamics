@@ -1,4 +1,13 @@
-import { IsByteLength, IsEmail, IsString, Length, Matches, MaxLength } from 'class-validator';
+import {
+  IsByteLength,
+  IsEmail,
+  IsEnum,
+  IsString,
+  Length,
+  Matches,
+  MaxLength,
+} from 'class-validator';
+import { AccountStatus, Role } from '@prisma/client';
 export class LoginDto {
   @IsString() @Length(1, 254) identity!: string;
   @IsString() @Length(1, 128) password!: string;
@@ -34,4 +43,12 @@ export class ResetDto extends ForgotDto {
 }
 export class ProfileDto {
   @IsString() @Length(2, 80) @Matches(/\S/, { message: 'Name cannot be blank.' }) name!: string;
+}
+export class VerifyDto extends ForgotDto {
+  @IsString() @Matches(/^\d{6}$/) code!: string;
+  @IsString() @Length(1, 128) password!: string;
+}
+export class AccessDto {
+  @IsEnum(AccountStatus) status!: AccountStatus;
+  @IsEnum(Role) role!: Role;
 }

@@ -53,7 +53,12 @@ export interface Catalog {
   warehouses: Warehouse[];
   locations: Location[];
   contacts: Contact[];
-  users: (Named & { role: string })[];
+  users: (Named & {
+    role: 'MANAGER' | 'STAFF';
+    status: 'PENDING' | 'ACTIVE' | 'DISABLED';
+    emailVerifiedAt: string | null;
+    email?: string;
+  })[];
   rules: Rule[];
 }
 export interface OperationLine {

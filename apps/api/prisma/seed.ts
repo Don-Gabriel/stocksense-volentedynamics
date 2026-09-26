@@ -27,6 +27,8 @@ async function main() {
       name: 'Alex Morgan',
       email: 'manager@stocksense.local',
       role: 'MANAGER',
+      status: 'ACTIVE',
+      emailVerifiedAt: new Date(),
       passwordHash,
     },
   });
@@ -36,6 +38,8 @@ async function main() {
       name: 'Jordan Lee',
       email: 'warehouse@stocksense.local',
       role: 'STAFF',
+      status: 'ACTIVE',
+      emailVerifiedAt: new Date(),
       passwordHash,
     },
   });

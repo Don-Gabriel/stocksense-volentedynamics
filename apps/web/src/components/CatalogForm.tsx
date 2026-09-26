@@ -1,8 +1,9 @@
 import { useForm } from 'react-hook-form';
+import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { api, refresh } from '../lib/api';
 import { useWorkspace } from '../lib/context';
-import { Button, ErrorBox, Field, Modal } from './ui';
+import { Button, ErrorBox, Field, Modal, ModalCancel } from './ui';
 import { Product } from '../types';
 
 export type Entity = 'products' | 'categories' | 'warehouses' | 'locations' | 'contacts' | 'rules';
@@ -24,6 +25,7 @@ export function CatalogForm({
   onClose: () => void;
 }) {
   const { catalog, notify } = useWorkspace();
+  const [dirty, setDirty] = useState(false);
   const defaults =
     entity === 'products'
       ? {
@@ -141,8 +143,16 @@ export function CatalogForm({
     </Field>
   );
   return (
-    <Modal title={`${record?.id ? 'Edit' : 'New'} ${singular[entity]}`} onClose={onClose}>
-      <form onSubmit={handleSubmit((data) => mutation.mutate(data))}>
+    <Modal
+      title={`${record?.id ? 'Edit' : 'New'} ${singular[entity]}`}
+      onClose={onClose}
+      dirty={dirty}
+      busy={mutation.isPending}
+    >
+      <form
+        onSubmit={handleSubmit((data) => mutation.mutate(data))}
+        onChangeCapture={() => setDirty(true)}
+      >
         <div className="modal-body stack-form">
           <ErrorBox error={mutation.error} />
           {entity !== 'rules' && input('name', 'Name', { maxLength: 80 })}
@@ -242,9 +252,7 @@ export function CatalogForm({
           )}
         </div>
         <div className="modal-footer">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
+          <ModalCancel />
           <Button type="submit" disabled={mutation.isPending}>
             {mutation.isPending ? 'Saving…' : 'Save ' + singular[entity]}
           </Button>

@@ -21,6 +21,7 @@
     "format": "prettier --write apps scripts tests docs *.json *.ts *.md"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.56.0",
     "concurrently": "^9.2.0",
     "prettier": "^3.9.9"

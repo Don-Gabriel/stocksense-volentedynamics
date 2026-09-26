@@ -1,0 +1,1265 @@
+[
+  {
+    "name": "AUTH Identity and access",
+    "cases": [
+      {
+        "id": "AUTH-01",
+        "scenario": "Manager login",
+        "preconditions": "Seeded test manager; logged out.",
+        "steps": "Enter manager and the seeded test password; sign in.",
+        "expected": "Overview opens with manager controls.",
+        "evidence": "UI:full receipt"
+      },
+      {
+        "id": "AUTH-02",
+        "scenario": "Warehouse staff login",
+        "preconditions": "Seeded test staff.",
+        "steps": "Sign in as warehouse. Open Products and Adjustments.",
+        "expected": "Catalog creation is absent; adjustment creation is disabled.",
+        "evidence": "UI:staff cannot edit"
+      },
+      {
+        "id": "AUTH-03",
+        "scenario": "Empty and incorrect credentials",
+        "preconditions": "Logged out.",
+        "steps": "Submit empty login; then use a nonexistent identity and wrong password.",
+        "expected": "Inline required errors and generic invalid-login error; no workspace.",
+        "evidence": "UI:invalid authentication input"
+      },
+      {
+        "id": "AUTH-04",
+        "scenario": "Show and hide password",
+        "preconditions": "Login form.",
+        "steps": "Enter a password; toggle Show password then Hide password.",
+        "expected": "Input changes text/password type without changing the value.",
+        "evidence": "UI:invalid authentication input"
+      },
+      {
+        "id": "AUTH-05",
+        "scenario": "Registration validation",
+        "preconditions": "No account required.",
+        "steps": "Submit short username, invalid email, weak or over-72-byte password via API.",
+        "expected": "400; no accepted invalid signup.",
+        "evidence": "API:signup creates staff"
+      },
+      {
+        "id": "AUTH-06",
+        "scenario": "Password confirmation mismatch",
+        "preconditions": "Signup form.",
+        "steps": "Enter otherwise valid fields with differing confirmation.",
+        "expected": "Passwords do not match; form is retained.",
+        "evidence": "UI:invalid authentication input"
+      },
+      {
+        "id": "AUTH-07",
+        "scenario": "Registration without immediate access",
+        "preconditions": "Unique username/email.",
+        "steps": "Create account with valid details. Inspect response and user record.",
+        "expected": "Verification required, STAFF/PENDING/unverified, no session cookie.",
+        "evidence": "API:signup creates staff"
+      },
+      {
+        "id": "AUTH-08",
+        "scenario": "Duplicate registration",
+        "preconditions": "Account already exists.",
+        "steps": "Submit the same username/email again.",
+        "expected": "409 with a useful duplicate-record message.",
+        "evidence": "API:signup creates staff"
+      },
+      {
+        "id": "AUTH-09",
+        "scenario": "Role injection at signup",
+        "preconditions": "Public API.",
+        "steps": "Include role=MANAGER in registration payload.",
+        "expected": "400; public signup cannot grant manager permissions.",
+        "evidence": "API:signup creates staff"
+      },
+      {
+        "id": "AUTH-10",
+        "scenario": "Verification email and countdown",
+        "preconditions": "Mailpit running; fresh signup.",
+        "steps": "Create account; inspect local inbox and the verification screen.",
+        "expected": "Six-digit mail code, local-mode notice, resend countdown disabled.",
+        "evidence": "UI:signup, email verification, approval"
+      },
+      {
+        "id": "AUTH-11",
+        "scenario": "Verification requires account password",
+        "preconditions": "Pending account and valid code.",
+        "steps": "Submit correct email/code with the wrong account password.",
+        "expected": "400; email stays unverified.",
+        "evidence": "API:email verification, manager approval"
+      },
+      {
+        "id": "AUTH-12",
+        "scenario": "Verify email, then await approval",
+        "preconditions": "Pending account and inbox code.",
+        "steps": "Enter email, code and account password; attempt login.",
+        "expected": "Email becomes verified; login still requires manager approval.",
+        "evidence": "UI:signup, email verification, approval"
+      },
+      {
+        "id": "AUTH-13",
+        "scenario": "Manager approval",
+        "preconditions": "Verified pending account; active manager.",
+        "steps": "Settings > Team > Approve > Confirm access change. Sign in as new user.",
+        "expected": "User becomes active staff and can open the workspace.",
+        "evidence": "UI:signup, email verification, approval"
+      },
+      {
+        "id": "AUTH-14",
+        "scenario": "Unverified approval rejected",
+        "preconditions": "Unverified pending account.",
+        "steps": "Manager requests ACTIVE via API.",
+        "expected": "Rejected until email verification succeeds.",
+        "evidence": "API:email verification, manager approval"
+      },
+      {
+        "id": "AUTH-15",
+        "scenario": "Staff cannot administer team",
+        "preconditions": "Active staff session.",
+        "steps": "PATCH another user access with staff cookie.",
+        "expected": "403; target permissions stay unchanged.",
+        "evidence": "API:email verification, manager approval"
+      },
+      {
+        "id": "AUTH-16",
+        "scenario": "Role change revokes sessions",
+        "preconditions": "Active staff account and current session.",
+        "steps": "Manager changes role to MANAGER; call API with old session, then log in again.",
+        "expected": "Old session returns 401; new session reports MANAGER.",
+        "evidence": "API:email verification, manager approval"
+      },
+      {
+        "id": "AUTH-17",
+        "scenario": "Disable account immediately",
+        "preconditions": "Active account with a session.",
+        "steps": "Manager disables the account in Team; reload its workspace.",
+        "expected": "Access ends; login is denied until re-enabled.",
+        "evidence": "UI:signup, email verification, approval"
+      },
+      {
+        "id": "AUTH-18",
+        "scenario": "Prevent self-lockout",
+        "preconditions": "Active manager.",
+        "steps": "Request changing own role or status through access API.",
+        "expected": "Rejected with instruction to ask another manager.",
+        "evidence": "API:email verification, manager approval"
+      },
+      {
+        "id": "AUTH-19",
+        "scenario": "Sign out",
+        "preconditions": "Logged-in staff.",
+        "steps": "Click Sign out; retry a protected request with the old cookie.",
+        "expected": "Login screen shown; old token rejected.",
+        "evidence": "API:rejects unauthenticated"
+      },
+      {
+        "id": "AUTH-20",
+        "scenario": "Profile name editing",
+        "preconditions": "Logged-in manager.",
+        "steps": "Change Full name; Save profile; reload.",
+        "expected": "Name persists; login ID/email remain unchanged.",
+        "evidence": "UI:catalog setup, editing"
+      },
+      {
+        "id": "AUTH-21",
+        "scenario": "Profile role injection",
+        "preconditions": "Logged-in manager.",
+        "steps": "PATCH profile with name plus role field.",
+        "expected": "400; profile route cannot alter permissions.",
+        "evidence": "API:catalog uniqueness"
+      },
+      {
+        "id": "AUTH-22",
+        "scenario": "Re-enable disabled account",
+        "preconditions": "Verified disabled account and another manager.",
+        "steps": "Manager activates account via API; sign in again; test old token.",
+        "expected": "New login succeeds; old tokens remain invalid.",
+        "evidence": "API:email verification, manager approval"
+      },
+      {
+        "id": "AUTH-23",
+        "scenario": "Two managers changing each other concurrently",
+        "preconditions": "Two verified active managers in disposable database.",
+        "steps": "Simultaneously demote/disable each other.",
+        "expected": "At least one active manager remains; conflicts are handled.",
+        "evidence": null
+      }
+    ]
+  },
+  {
+    "name": "MAIL Verification and password recovery",
+    "cases": [
+      {
+        "id": "MAIL-01",
+        "scenario": "Forgot password sends usable email",
+        "preconditions": "Active test account; Mailpit.",
+        "steps": "Request reset; read six-digit code from local mail.",
+        "expected": "API never returns code; mail contains a usable code.",
+        "evidence": "API:sends a usable reset"
+      },
+      {
+        "id": "MAIL-02",
+        "scenario": "Unknown email response",
+        "preconditions": "Known and unknown addresses.",
+        "steps": "Request reset for each once.",
+        "expected": "Same generic message; response does not directly confirm account existence.",
+        "evidence": "API:sends a usable reset"
+      },
+      {
+        "id": "MAIL-03",
+        "scenario": "Reset through UI",
+        "preconditions": "Verified approved user; second active session.",
+        "steps": "Forgot password > code > matching strong new password > Update password.",
+        "expected": "New password logs in; old session returns to login.",
+        "evidence": "UI:signup, email verification, approval"
+      },
+      {
+        "id": "MAIL-04",
+        "scenario": "Wrong reset code",
+        "preconditions": "Live challenge.",
+        "steps": "Submit incorrect code. Inspect attempts count.",
+        "expected": "400; failed attempt is recorded; password unchanged.",
+        "evidence": "API:OTP is one-time"
+      },
+      {
+        "id": "MAIL-05",
+        "scenario": "Reused reset code",
+        "preconditions": "A successful reset just completed.",
+        "steps": "Submit the same code again with another password.",
+        "expected": "Rejected as already used.",
+        "evidence": "API:OTP is one-time"
+      },
+      {
+        "id": "MAIL-06",
+        "scenario": "Expired reset code",
+        "preconditions": "Expired challenge.",
+        "steps": "Submit otherwise valid reset.",
+        "expected": "Rejected; password remains unchanged.",
+        "evidence": "API:expired reset challenges"
+      },
+      {
+        "id": "MAIL-07",
+        "scenario": "Five-attempt verification limit",
+        "preconditions": "Pending account; intercepted local test code.",
+        "steps": "Submit five wrong codes, then the correct one.",
+        "expected": "All attempts after the limit reject; a new code is needed.",
+        "evidence": "API:verification codes enforce"
+      },
+      {
+        "id": "MAIL-08",
+        "scenario": "Verification and reset separation",
+        "preconditions": "Valid email-verification code.",
+        "steps": "Use it on reset-password endpoint.",
+        "expected": "Rejected because code purpose is different.",
+        "evidence": "API:verification codes enforce"
+      },
+      {
+        "id": "MAIL-09",
+        "scenario": "Expired verification code",
+        "preconditions": "Pending account; test expiry advanced.",
+        "steps": "Submit the previously valid code after expiry.",
+        "expected": "Verification rejected.",
+        "evidence": "API:verification codes enforce"
+      },
+      {
+        "id": "MAIL-10",
+        "scenario": "Resend cooldown and replacement",
+        "preconditions": "Fresh verification challenge.",
+        "steps": "Request resend immediately; after simulated 61s request again.",
+        "expected": "Immediate request returns 429; replacement consumes old challenge.",
+        "evidence": "API:verification codes enforce"
+      },
+      {
+        "id": "MAIL-11",
+        "scenario": "SMTP failure recovery",
+        "preconditions": "Mail transport fails in controlled API test.",
+        "steps": "Register; inspect pending account and challenges; restore transport and resend.",
+        "expected": "No access, failed challenge consumed, resend succeeds.",
+        "evidence": "API:SMTP failures"
+      },
+      {
+        "id": "MAIL-12",
+        "scenario": "Reset input errors in browser",
+        "preconditions": "Reset form; nonexistent account.",
+        "steps": "Enter six-digit invalid code and matching strong password.",
+        "expected": "Useful invalid/expired/used error, with entered values retained.",
+        "evidence": "UI:invalid authentication input"
+      },
+      {
+        "id": "MAIL-13",
+        "scenario": "Email request throttling",
+        "preconditions": "Nonexistent test email.",
+        "steps": "Exceed allowed forgot-password requests.",
+        "expected": "429 after configured limit.",
+        "evidence": "API:login and code-request"
+      },
+      {
+        "id": "MAIL-14",
+        "scenario": "Gmail connection authentication",
+        "preconditions": "Owner locally configures Gmail app password.",
+        "steps": "Run node scripts/check-email.cjs.",
+        "expected": "Authenticated TLS connection; no credentials printed and no message sent.",
+        "evidence": null
+      },
+      {
+        "id": "MAIL-15",
+        "scenario": "Real Gmail inbox verification",
+        "preconditions": "Gmail configured; recipient controlled by tester.",
+        "steps": "Register real address; check inbox/spam; enter received code in app.",
+        "expected": "External email arrives; verification and approval work.",
+        "evidence": null
+      },
+      {
+        "id": "MAIL-16",
+        "scenario": "Real Gmail reset delivery",
+        "preconditions": "Approved real account and configured sender.",
+        "steps": "Use Forgot password; complete reset using external inbox.",
+        "expected": "Correct reset message arrives and code works once.",
+        "evidence": null
+      },
+      {
+        "id": "MAIL-17",
+        "scenario": "SMTP outage and network timeout in UI",
+        "preconditions": "Controlled external SMTP outage.",
+        "steps": "Request code; wait for bounded timeout; restore sender and resend.",
+        "expected": "Useful failure, no false success, recovery possible.",
+        "evidence": null
+      }
+    ]
+  },
+  {
+    "name": "NAV Navigation and usability",
+    "cases": [
+      {
+        "id": "NAV-01",
+        "scenario": "Dashboard entry points",
+        "preconditions": "Manager on Overview.",
+        "steps": "Use dashboard filters and View all operations.",
+        "expected": "Operation list retains type, status and category.",
+        "evidence": "UI:search, filters, kanban"
+      },
+      {
+        "id": "NAV-02",
+        "scenario": "Operation detail and filtered return",
+        "preconditions": "Deliveries filtered to Waiting.",
+        "steps": "Open a reference; choose Back to deliveries.",
+        "expected": "Waiting filter remains selected.",
+        "evidence": "UI:filtered list return"
+      },
+      {
+        "id": "NAV-03",
+        "scenario": "Kanban persists after reload",
+        "preconditions": "Operation list.",
+        "steps": "Choose Kanban view; reload.",
+        "expected": "Kanban stays active and grouped by status.",
+        "evidence": "UI:filtered list return"
+      },
+      {
+        "id": "NAV-04",
+        "scenario": "Kanban status filter",
+        "preconditions": "Delivery Kanban.",
+        "steps": "Select Waiting.",
+        "expected": "Only the Waiting column is shown.",
+        "evidence": "UI:search, filters, kanban"
+      },
+      {
+        "id": "NAV-05",
+        "scenario": "Warehouse scope persistence",
+        "preconditions": "Stock page; multiple warehouses.",
+        "steps": "Select South Store; reload.",
+        "expected": "Scope remains South Store; Main Stock rows absent.",
+        "evidence": "UI:filtered list return"
+      },
+      {
+        "id": "NAV-06",
+        "scenario": "Mobile drawer and destination",
+        "preconditions": "390px viewport.",
+        "steps": "Open navigation; choose Stock on hand.",
+        "expected": "Drawer closes and Stock on hand opens.",
+        "evidence": "UI:search, filters, kanban"
+      },
+      {
+        "id": "NAV-07",
+        "scenario": "Drawer keyboard dismissal",
+        "preconditions": "390px viewport.",
+        "steps": "Open drawer and press Escape.",
+        "expected": "Drawer closes; focus returns to Open navigation.",
+        "evidence": "UI:keyboard navigation"
+      },
+      {
+        "id": "NAV-08",
+        "scenario": "Keyboard settings tabs",
+        "preconditions": "Settings > Warehouses.",
+        "steps": "Focus tab; press ArrowRight.",
+        "expected": "Locations tab receives focus and its panel appears.",
+        "evidence": "UI:keyboard navigation"
+      },
+      {
+        "id": "NAV-09",
+        "scenario": "Modal autofocus and Escape",
+        "preconditions": "Products; untouched new-product form.",
+        "steps": "Open New product, inspect focus; press Escape.",
+        "expected": "Name field receives focus; untouched modal closes.",
+        "evidence": "UI:keyboard navigation"
+      },
+      {
+        "id": "NAV-10",
+        "scenario": "Unsaved edits are protected",
+        "preconditions": "Receipt form with changed quantity.",
+        "steps": "Close dialog; select Keep editing.",
+        "expected": "Warning shown; quantity retained.",
+        "evidence": "UI:draft edits, duplicate"
+      },
+      {
+        "id": "NAV-11",
+        "scenario": "Network failure retains input",
+        "preconditions": "Category form with test name.",
+        "steps": "Simulate 503 on save, then restore endpoint and retry.",
+        "expected": "Error shown without losing name; second save succeeds.",
+        "evidence": "UI:network errors retain"
+      },
+      {
+        "id": "NAV-12",
+        "scenario": "Responsive page overflow",
+        "preconditions": "Viewports 390, 768 and 1280px wide.",
+        "steps": "Open Overview and compare document width with viewport.",
+        "expected": "No horizontal page overflow.",
+        "evidence": "UI:keyboard navigation"
+      },
+      {
+        "id": "NAV-13",
+        "scenario": "Malformed URL dates",
+        "preconditions": "Signed in.",
+        "steps": "Open history?from=not-a-date&to=oops.",
+        "expected": "History loads safely rather than crashing.",
+        "evidence": "UI:filtered list return"
+      },
+      {
+        "id": "NAV-14",
+        "scenario": "Unknown route recovery",
+        "preconditions": "Signed in.",
+        "steps": "Open a nonexistent route; click Go to overview.",
+        "expected": "Helpful empty state and working return navigation.",
+        "evidence": "UI:filtered list return"
+      },
+      {
+        "id": "NAV-15",
+        "scenario": "Automated accessibility scans",
+        "preconditions": "Chromium; login/signup/overview/stock/team/product dialog.",
+        "steps": "Run axe WCAG 2 A/AA and 2.1 AA rules on listed screens.",
+        "expected": "No violations in the checked rules/screens.",
+        "evidence": "UI:automated WCAG"
+      },
+      {
+        "id": "NAV-16",
+        "scenario": "Keyboard-only complete workflow",
+        "preconditions": "Desktop, keyboard only.",
+        "steps": "Use skip link, forms, all tabs, drawer and operation actions without mouse.",
+        "expected": "Visible focus, logical order, no keyboard trap.",
+        "evidence": null
+      },
+      {
+        "id": "NAV-17",
+        "scenario": "Screen-reader walkthrough",
+        "preconditions": "NVDA or another actual reader.",
+        "steps": "Read headings, validation errors, statuses, data tables and dialogs.",
+        "expected": "Purpose, state, errors and relationships are announced.",
+        "evidence": null
+      },
+      {
+        "id": "NAV-18",
+        "scenario": "200% browser zoom / real devices",
+        "preconditions": "Desktop zoom plus physical phone/tablet.",
+        "steps": "Run signup and a stock operation at zoom 200% and on devices.",
+        "expected": "No clipped actions or lost content.",
+        "evidence": null
+      }
+    ]
+  },
+  {
+    "name": "CAT Catalog and workspace setup",
+    "cases": [
+      {
+        "id": "CAT-01",
+        "scenario": "Create category",
+        "preconditions": "Manager.",
+        "steps": "Settings > Categories > Add category; save Browser category.",
+        "expected": "Category appears and is selectable in product form.",
+        "evidence": "UI:catalog setup, editing"
+      },
+      {
+        "id": "CAT-02",
+        "scenario": "Duplicate / blank category",
+        "preconditions": "Manager cookie.",
+        "steps": "POST duplicate name; POST whitespace-only name.",
+        "expected": "409 duplicate and 400 blank input.",
+        "evidence": "API:catalog uniqueness"
+      },
+      {
+        "id": "CAT-03",
+        "scenario": "Create warehouse",
+        "preconditions": "Manager.",
+        "steps": "Add warehouse with name, short code and address.",
+        "expected": "Warehouse appears in settings and location selector.",
+        "evidence": "UI:catalog setup, editing"
+      },
+      {
+        "id": "CAT-04",
+        "scenario": "Warehouse code validation",
+        "preconditions": "Manager API.",
+        "steps": "Submit code containing a space.",
+        "expected": "400; invalid warehouse is not created.",
+        "evidence": "API:catalog uniqueness"
+      },
+      {
+        "id": "CAT-05",
+        "scenario": "Create storage location",
+        "preconditions": "Existing warehouse.",
+        "steps": "Add Browser rack under Browser depot.",
+        "expected": "Location belongs to selected warehouse.",
+        "evidence": "UI:catalog setup, editing"
+      },
+      {
+        "id": "CAT-06",
+        "scenario": "Create supplier contact",
+        "preconditions": "Manager.",
+        "steps": "Add supplier with name, email, phone and address.",
+        "expected": "Contact saves successfully.",
+        "evidence": "UI:catalog setup, editing"
+      },
+      {
+        "id": "CAT-07",
+        "scenario": "Invalid contact email",
+        "preconditions": "Manager API.",
+        "steps": "Create supplier with malformed email.",
+        "expected": "400 with no accepted invalid contact.",
+        "evidence": "API:catalog uniqueness"
+      },
+      {
+        "id": "CAT-08",
+        "scenario": "Create product",
+        "preconditions": "Manager and category.",
+        "steps": "New product with unique SKU, name, unit and cost.",
+        "expected": "Product appears in catalog.",
+        "evidence": "UI:full receipt"
+      },
+      {
+        "id": "CAT-09",
+        "scenario": "Opening balance",
+        "preconditions": "Manager, existing location.",
+        "steps": "Create product with opening quantity 15 at Browser rack.",
+        "expected": "On hand/available=15; history has +15.",
+        "evidence": "UI:catalog setup, editing"
+      },
+      {
+        "id": "CAT-10",
+        "scenario": "Edit description",
+        "preconditions": "Existing product.",
+        "steps": "Edit product description and save.",
+        "expected": "Changes save successfully without altering stock.",
+        "evidence": "UI:catalog setup, editing"
+      },
+      {
+        "id": "CAT-11",
+        "scenario": "Archive with stock rejected",
+        "preconditions": "Product with positive stock.",
+        "steps": "Uncheck Active product and save.",
+        "expected": "Clear remaining stock message; product retained.",
+        "evidence": "UI:catalog setup, editing"
+      },
+      {
+        "id": "CAT-12",
+        "scenario": "Archive empty product",
+        "preconditions": "Product has no stock/documents.",
+        "steps": "Uncheck Active; save; enable Include archived.",
+        "expected": "Hidden from active list; shown as Archived when requested.",
+        "evidence": "UI:reordering rules, replenishment"
+      },
+      {
+        "id": "CAT-13",
+        "scenario": "Historical unit change rejected",
+        "preconditions": "Product used on a posted document.",
+        "steps": "Try PCS to KG via API.",
+        "expected": "Unit change rejected to preserve historical meaning.",
+        "evidence": "API:protects historical"
+      },
+      {
+        "id": "CAT-14",
+        "scenario": "Location warehouse reassignment rejected",
+        "preconditions": "Location referenced in inventory documents.",
+        "steps": "Move it to another warehouse via API.",
+        "expected": "Rejected; create a new location and transfer instead.",
+        "evidence": "API:protects historical"
+      },
+      {
+        "id": "CAT-15",
+        "scenario": "Historical contact type protection",
+        "preconditions": "Supplier used on documents.",
+        "steps": "Change supplier to customer via API.",
+        "expected": "Rejected; separate contact record required.",
+        "evidence": "API:protects historical"
+      },
+      {
+        "id": "CAT-16",
+        "scenario": "Archived stock creation blocked",
+        "preconditions": "Manager API.",
+        "steps": "Create inactive product with positive opening quantity.",
+        "expected": "Rejected; no hidden positive balance.",
+        "evidence": "API:archived products and inactive"
+      },
+      {
+        "id": "CAT-17",
+        "scenario": "Reordering rule create/update",
+        "preconditions": "Active PCS product; manager.",
+        "steps": "Add minimum/target; edit minimum in same product/location rule.",
+        "expected": "Values update without duplicate rules.",
+        "evidence": "UI:reordering rules, replenishment"
+      },
+      {
+        "id": "CAT-18",
+        "scenario": "Reordering target validation",
+        "preconditions": "Manager; rule form.",
+        "steps": "Enter minimum 100 and target 50; save; correct target to 150.",
+        "expected": "First save rejected, corrected save succeeds.",
+        "evidence": "UI:reordering rules, replenishment"
+      },
+      {
+        "id": "CAT-19",
+        "scenario": "Fractional piece rule rejected",
+        "preconditions": "PCS product.",
+        "steps": "POST minimum 1.5 and target 5.",
+        "expected": "Rejected: pieces require whole quantities.",
+        "evidence": "API:reorder rules validate"
+      },
+      {
+        "id": "CAT-20",
+        "scenario": "Inactive-product rule rejected",
+        "preconditions": "Archived product.",
+        "steps": "Create its reorder rule directly via API.",
+        "expected": "Rejected; active product required.",
+        "evidence": "API:archived products and inactive"
+      },
+      {
+        "id": "CAT-21",
+        "scenario": "Edit category, warehouse, location and contact details",
+        "preconditions": "Manager; existing unused settings records.",
+        "steps": "PATCH names, address, location code and contact details; retrieve catalog.",
+        "expected": "Changes persist; relationships remain correct.",
+        "evidence": "API:catalog settings can be edited"
+      },
+      {
+        "id": "CAT-22",
+        "scenario": "Reactivate archived product",
+        "preconditions": "Archived product with no stock.",
+        "steps": "PATCH active=true; inspect saved product.",
+        "expected": "Active again for new operations.",
+        "evidence": "API:catalog settings can be edited"
+      }
+    ]
+  },
+  {
+    "name": "DOC Shared operation controls",
+    "cases": [
+      {
+        "id": "DOC-01",
+        "scenario": "Draft saves without moving stock",
+        "preconditions": "Existing active product.",
+        "steps": "Create receipt draft and inspect balance.",
+        "expected": "Balance unchanged until validation.",
+        "evidence": "API:receipt posts only"
+      },
+      {
+        "id": "DOC-02",
+        "scenario": "Automatic unique reference",
+        "preconditions": "Saved receipt.",
+        "steps": "Record reference; edit draft quantity and notes.",
+        "expected": "Reference remains identical across edits.",
+        "evidence": "API:draft edits are atomic"
+      },
+      {
+        "id": "DOC-03",
+        "scenario": "Edit draft quantity and notes",
+        "preconditions": "Draft receipt.",
+        "steps": "Change quantity 3 to 8 and notes; save; later validate.",
+        "expected": "Saved quantity/notes retained; exactly 8 posted.",
+        "evidence": "API:draft edits are atomic"
+      },
+      {
+        "id": "DOC-04",
+        "scenario": "Operation type cannot change",
+        "preconditions": "Existing draft receipt.",
+        "steps": "PATCH it with DELIVERY type.",
+        "expected": "Rejected; original receipt preserved.",
+        "evidence": "API:draft edits are atomic"
+      },
+      {
+        "id": "DOC-05",
+        "scenario": "Confirm-before-validate requirement",
+        "preconditions": "Draft receipt.",
+        "steps": "Call validate before confirm.",
+        "expected": "Rejected; no physical movement.",
+        "evidence": "API:receipt posts only"
+      },
+      {
+        "id": "DOC-06",
+        "scenario": "Duplicate product lines",
+        "preconditions": "Receipt form.",
+        "steps": "Add same product on two lines and save.",
+        "expected": "Clear duplicate warning; combine quantities.",
+        "evidence": "UI:draft edits, duplicate"
+      },
+      {
+        "id": "DOC-07",
+        "scenario": "Line count bounds",
+        "preconditions": "Authenticated API.",
+        "steps": "Submit zero lines and 51 lines.",
+        "expected": "400; no operation created.",
+        "evidence": "API:invalid quantities"
+      },
+      {
+        "id": "DOC-08",
+        "scenario": "Quantity bounds and precision",
+        "preconditions": "PCS product.",
+        "steps": "Submit negative, zero receipt, fractional PCS, 4 decimal places, over maximum, and numeric string.",
+        "expected": "Rejected atomically.",
+        "evidence": "API:invalid quantities"
+      },
+      {
+        "id": "DOC-09",
+        "scenario": "Foreign-record validation",
+        "preconditions": "Authenticated API.",
+        "steps": "Submit nonexistent product, location or responsible user; wrong contact type.",
+        "expected": "400; no partial document or balance changes.",
+        "evidence": "API:invalid quantities"
+      },
+      {
+        "id": "DOC-10",
+        "scenario": "Inactive assignment rejected",
+        "preconditions": "Pending/inactive user.",
+        "steps": "Assign that user to a new receipt through API.",
+        "expected": "Rejected as invalid responsible user.",
+        "evidence": "API:archived products and inactive"
+      },
+      {
+        "id": "DOC-11",
+        "scenario": "Date / notes / privileged field validation",
+        "preconditions": "Authenticated API.",
+        "steps": "Use invalid date, notes over 1000 characters, or createdById injection.",
+        "expected": "400; no operation persists.",
+        "evidence": "API:invalid quantities"
+      },
+      {
+        "id": "DOC-12",
+        "scenario": "Cancel confirmation",
+        "preconditions": "Draft receipt.",
+        "steps": "Cancel operation; first Keep operation, then confirm cancellation.",
+        "expected": "First action preserves draft; confirmed action becomes Canceled.",
+        "evidence": "UI:draft edits, duplicate"
+      },
+      {
+        "id": "DOC-13",
+        "scenario": "Canceled document cannot revive",
+        "preconditions": "Canceled receipt.",
+        "steps": "Confirm/validate it via API.",
+        "expected": "Rejected; balance and ledger remain unchanged.",
+        "evidence": "API:canceled operations never"
+      },
+      {
+        "id": "DOC-14",
+        "scenario": "Completed document immutable",
+        "preconditions": "DONE receipt.",
+        "steps": "Attempt edit or cancel.",
+        "expected": "Rejected; original ledger and balance remain.",
+        "evidence": "API:receipt posts only"
+      },
+      {
+        "id": "DOC-15",
+        "scenario": "Printable completed document",
+        "preconditions": "Validated delivery.",
+        "steps": "Click Print with test spy; render print media.",
+        "expected": "Print requested once; reference/product visible; navigation hidden.",
+        "evidence": "UI:shortage recovery"
+      },
+      {
+        "id": "DOC-16",
+        "scenario": "Print on a physical printer",
+        "preconditions": "Completed receipt/delivery with many lines.",
+        "steps": "Print using an actual printer and inspect pagination.",
+        "expected": "Readable totals/lines, no truncation or navigation.",
+        "evidence": null
+      }
+    ]
+  },
+  {
+    "name": "REC Receipts",
+    "cases": [
+      {
+        "id": "REC-01",
+        "scenario": "Receipt happy path",
+        "preconditions": "Active product and supplier.",
+        "steps": "Create receipt for 100, confirm, validate.",
+        "expected": "Destination stock increases by 100.",
+        "evidence": "UI:full receipt"
+      },
+      {
+        "id": "REC-02",
+        "scenario": "Confirm leaves on hand unchanged",
+        "preconditions": "Draft receipt.",
+        "steps": "Confirm then inspect database balance before validation.",
+        "expected": "Ready document; physical stock still unchanged.",
+        "evidence": "API:receipt posts only"
+      },
+      {
+        "id": "REC-03",
+        "scenario": "Repeat validation is safe",
+        "preconditions": "Ready receipt for 100.",
+        "steps": "Send two concurrent validate requests.",
+        "expected": "Both resolve to DONE; one +100 ledger entry.",
+        "evidence": "API:receipt posts only"
+      },
+      {
+        "id": "REC-04",
+        "scenario": "Fractional non-piece quantities",
+        "preconditions": "KG product.",
+        "steps": "Receive 0.3 then 0.2.",
+        "expected": "Exact on hand 0.5.",
+        "evidence": "API:supports decimal units"
+      },
+      {
+        "id": "REC-05",
+        "scenario": "Wrong supplier rejected",
+        "preconditions": "Receipt with customer contact.",
+        "steps": "POST receipt using customer contactId.",
+        "expected": "400; receipt not created.",
+        "evidence": "API:invalid quantities"
+      },
+      {
+        "id": "REC-06",
+        "scenario": "Receipt cancellation race",
+        "preconditions": "Ready receipt for 11.",
+        "steps": "Run cancel and validate concurrently.",
+        "expected": "Either Canceled/0 or Done/11, never partial state.",
+        "evidence": "API:concurrent cancellation"
+      }
+    ]
+  },
+  {
+    "name": "DEL Deliveries and reservations",
+    "cases": [
+      {
+        "id": "DEL-01",
+        "scenario": "Delivery happy path",
+        "preconditions": "100 available pieces.",
+        "steps": "Create 20-piece delivery; confirm, pick, pack, validate.",
+        "expected": "Source on hand decreases by 20.",
+        "evidence": "UI:full receipt"
+      },
+      {
+        "id": "DEL-02",
+        "scenario": "Reservation affects free stock",
+        "preconditions": "10 on hand; two deliveries of 7.",
+        "steps": "Confirm both concurrently; inspect quantities.",
+        "expected": "One Ready, one Waiting; reserved 7, available 3.",
+        "evidence": "API:competing deliveries"
+      },
+      {
+        "id": "DEL-03",
+        "scenario": "Insufficient stock waits",
+        "preconditions": "Only 2 available, demand 5.",
+        "steps": "Confirm delivery in UI.",
+        "expected": "Waiting banner, highlighted shortage, Check availability action.",
+        "evidence": "UI:shortage recovery"
+      },
+      {
+        "id": "DEL-04",
+        "scenario": "Receive and retry availability",
+        "preconditions": "Waiting demand 5, source has 2.",
+        "steps": "Receive 3; choose Check availability.",
+        "expected": "Delivery becomes Ready and can be picked.",
+        "evidence": "UI:shortage recovery"
+      },
+      {
+        "id": "DEL-05",
+        "scenario": "Pick required before pack",
+        "preconditions": "Ready delivery.",
+        "steps": "Invoke pack before pick via API.",
+        "expected": "Rejected without changing quantities.",
+        "evidence": "API:delivery requires pick"
+      },
+      {
+        "id": "DEL-06",
+        "scenario": "Pick and pack required before validate",
+        "preconditions": "Ready delivery without fulfillment steps.",
+        "steps": "Invoke validate directly.",
+        "expected": "Rejected until pick and pack complete.",
+        "evidence": "API:delivery requires pick"
+      },
+      {
+        "id": "DEL-07",
+        "scenario": "Cancel releases stock",
+        "preconditions": "One Ready and one Waiting competing delivery.",
+        "steps": "Cancel Ready document; reconfirm Waiting.",
+        "expected": "Reservation released; other document becomes Ready.",
+        "evidence": "API:competing deliveries"
+      },
+      {
+        "id": "DEL-08",
+        "scenario": "All lines or none",
+        "preconditions": "Two products; one line short.",
+        "steps": "Confirm multiline delivery.",
+        "expected": "Whole document Waiting; neither line reserved.",
+        "evidence": "API:short multi-line"
+      },
+      {
+        "id": "DEL-09",
+        "scenario": "Outgoing ledger and reservation cleanup",
+        "preconditions": "Ready picked/packed delivery for 5.",
+        "steps": "Validate and inspect source plus ledger.",
+        "expected": "Exactly -5 movement; reservation cleared.",
+        "evidence": "API:delivery requires pick"
+      }
+    ]
+  },
+  {
+    "name": "TRF Internal transfers",
+    "cases": [
+      {
+        "id": "TRF-01",
+        "scenario": "Within-warehouse transfer",
+        "preconditions": "100 in source, zero destination.",
+        "steps": "Confirm and validate transfer of 30.",
+        "expected": "Source 70, destination 30, total 100.",
+        "evidence": "API:transfers conserve"
+      },
+      {
+        "id": "TRF-02",
+        "scenario": "Transfer signed entries",
+        "preconditions": "Completed transfer of 30.",
+        "steps": "Inspect ledger rows for the operation.",
+        "expected": "One -30 and one +30; sum is zero.",
+        "evidence": "API:transfers conserve"
+      },
+      {
+        "id": "TRF-03",
+        "scenario": "Same-location transfer rejected",
+        "preconditions": "Existing location.",
+        "steps": "Create transfer with identical source/destination.",
+        "expected": "Rejected; no stock changes.",
+        "evidence": "API:supports decimal units"
+      },
+      {
+        "id": "TRF-04",
+        "scenario": "Cross-warehouse transfer",
+        "preconditions": "20 in main warehouse.",
+        "steps": "Transfer 6 to branch warehouse, validate.",
+        "expected": "Main 14, branch 6; branch reports only its quantities.",
+        "evidence": "API:cross-warehouse"
+      },
+      {
+        "id": "TRF-05",
+        "scenario": "Transfer browser flow",
+        "preconditions": "Product received through UI.",
+        "steps": "Create transfer to Production Rack; confirm and validate.",
+        "expected": "Reloaded stock view shows destination 30.",
+        "evidence": "UI:full receipt"
+      },
+      {
+        "id": "TRF-06",
+        "scenario": "Short transfer and cancellation",
+        "preconditions": "Source has less than requested quantity.",
+        "steps": "Confirm transfer; receive missing stock; retry; cancel before validation.",
+        "expected": "Waits when short; reservation later released; no physical movement.",
+        "evidence": "API:a short transfer waits"
+      }
+    ]
+  },
+  {
+    "name": "ADJ Counts and stock integrity",
+    "cases": [
+      {
+        "id": "ADJ-01",
+        "scenario": "Physical count means new total",
+        "preconditions": "Recorded stock 50.",
+        "steps": "Count 48; confirm and validate.",
+        "expected": "New total 48; signed adjustment -2.",
+        "evidence": "UI:full receipt"
+      },
+      {
+        "id": "ADJ-02",
+        "scenario": "Zero physical count",
+        "preconditions": "Recorded stock 9, no reservations.",
+        "steps": "Count zero; confirm and validate.",
+        "expected": "On hand becomes zero without negative balance.",
+        "evidence": "API:counts record"
+      },
+      {
+        "id": "ADJ-03",
+        "scenario": "Stale count rejected",
+        "preconditions": "Saved count snapshot; later receipt changes balance.",
+        "steps": "Validate the old count.",
+        "expected": "Conflict; user must recount; newer stock retained.",
+        "evidence": "API:counts record"
+      },
+      {
+        "id": "ADJ-04",
+        "scenario": "Reserved stock protection and rollback",
+        "preconditions": "Two products; one has 8 reserved out of 10.",
+        "steps": "Try count of 5 for both products.",
+        "expected": "Entire validation rolls back, including the unaffected first line.",
+        "evidence": "API:adjustment conflicting"
+      },
+      {
+        "id": "ADJ-05",
+        "scenario": "Staff count prohibition",
+        "preconditions": "Staff session.",
+        "steps": "Attempt adjustment creation in UI and API.",
+        "expected": "Disabled UI action; API 403.",
+        "evidence": "UI:staff cannot edit"
+      },
+      {
+        "id": "ADJ-06",
+        "scenario": "All balances reconcile",
+        "preconditions": "Completed test operations.",
+        "steps": "For every product/location, sum ledger delta and compare persisted balance.",
+        "expected": "Exact equality for every balance.",
+        "evidence": "API:ledger reconciles"
+      },
+      {
+        "id": "ADJ-07",
+        "scenario": "Positive count delta",
+        "preconditions": "Recorded 5 with no reservations.",
+        "steps": "Count 8; confirm and validate.",
+        "expected": "Balance becomes 8, ledger records +3.",
+        "evidence": "API:positive and unchanged counts"
+      },
+      {
+        "id": "ADJ-08",
+        "scenario": "No-change count",
+        "preconditions": "Recorded 8 with no reservations.",
+        "steps": "Count 8; confirm and validate.",
+        "expected": "Balance remains 8; document completes consistently.",
+        "evidence": "API:positive and unchanged counts"
+      }
+    ]
+  },
+  {
+    "name": "RPT Stock, history, and dashboard",
+    "cases": [
+      {
+        "id": "RPT-01",
+        "scenario": "On hand versus available",
+        "preconditions": "10 on hand with 7 reserved.",
+        "steps": "Inspect stock endpoint.",
+        "expected": "On hand=10, reserved=7, available=3.",
+        "evidence": "API:competing deliveries"
+      },
+      {
+        "id": "RPT-02",
+        "scenario": "Low/out-of-stock thresholds",
+        "preconditions": "PCS rule minimum 4, target 12.",
+        "steps": "Inspect at stock 0, then 4, then 5.",
+        "expected": "Out of stock/suggest 12; low/suggest 8; in stock/suggest 0.",
+        "evidence": "API:reorder rules validate"
+      },
+      {
+        "id": "RPT-03",
+        "scenario": "Stock search and location filter",
+        "preconditions": "Known SKU.",
+        "steps": "Search lowercase SKU and filter location/category.",
+        "expected": "Correct matching row and balance only.",
+        "evidence": "API:case-insensitive searches"
+      },
+      {
+        "id": "RPT-04",
+        "scenario": "Stock persists after reload",
+        "preconditions": "Completed receipt/delivery/transfer/count browser flow.",
+        "steps": "Reload Stock on hand.",
+        "expected": "Main Stock 48; Production Rack 30.",
+        "evidence": "UI:full receipt"
+      },
+      {
+        "id": "RPT-05",
+        "scenario": "Search/filter a low-stock row",
+        "preconditions": "Seeded packing tape.",
+        "steps": "Search TAP-010, select WH/Main Stock.",
+        "expected": "Single result with Low stock status.",
+        "evidence": "UI:search, filters, kanban"
+      },
+      {
+        "id": "RPT-06",
+        "scenario": "History signs and transfer sides",
+        "preconditions": "Completed browser lifecycle.",
+        "steps": "Search BROWSER-01 in history.",
+        "expected": "+100 receipt, -20 delivery, -30/+30 transfer, -2 count.",
+        "evidence": "UI:full receipt"
+      },
+      {
+        "id": "RPT-07",
+        "scenario": "Ledger pagination",
+        "preconditions": "Two receipts for one SKU.",
+        "steps": "Request page 1 and 2 with limit 1.",
+        "expected": "Total 2; distinct row on each page.",
+        "evidence": "API:case-insensitive searches"
+      },
+      {
+        "id": "RPT-08",
+        "scenario": "Ledger date filtering",
+        "preconditions": "Recent receipt history.",
+        "steps": "Filter to years 2000-2001.",
+        "expected": "No rows returned.",
+        "evidence": "API:case-insensitive searches"
+      },
+      {
+        "id": "RPT-09",
+        "scenario": "Warehouse-scoped ledger",
+        "preconditions": "Completed cross-warehouse transfer.",
+        "steps": "Filter ledger to destination warehouse.",
+        "expected": "Only destination +6 movement appears.",
+        "evidence": "API:cross-warehouse"
+      },
+      {
+        "id": "RPT-10",
+        "scenario": "Immutable history API",
+        "preconditions": "Existing ledger entry.",
+        "steps": "DELETE its ledger endpoint.",
+        "expected": "404; persisted entry remains.",
+        "evidence": "API:catalog uniqueness"
+      },
+      {
+        "id": "RPT-11",
+        "scenario": "Dashboard avoids double-counting products",
+        "preconditions": "One low-stock product across two locations.",
+        "steps": "Request dashboard for this product.",
+        "expected": "One low-stock product, two location alerts.",
+        "evidence": "API:dashboard counts a low-stock"
+      },
+      {
+        "id": "RPT-12",
+        "scenario": "Invalid API filters",
+        "preconditions": "Authenticated client.",
+        "steps": "Request page 0, limit 101, bad type/status/date.",
+        "expected": "400; no server crash.",
+        "evidence": "API:case-insensitive searches"
+      },
+      {
+        "id": "RPT-13",
+        "scenario": "Global inventory search",
+        "preconditions": "Overview on desktop.",
+        "steps": "Enter known SKU in topbar search; press Enter.",
+        "expected": "Stock page opens with matching search value.",
+        "evidence": "UI:global search, overdue quick filter"
+      },
+      {
+        "id": "RPT-14",
+        "scenario": "Overdue quick filter",
+        "preconditions": "Past scheduled open operations.",
+        "steps": "Click a Late badge on Overview; clear overdue filter.",
+        "expected": "Overdue filter appears in URL and banner; clearing removes it.",
+        "evidence": "UI:global search, overdue quick filter"
+      }
+    ]
+  },
+  {
+    "name": "SEC Security and operational checks",
+    "cases": [
+      {
+        "id": "SEC-01",
+        "scenario": "Protected routes",
+        "preconditions": "No session.",
+        "steps": "GET catalog.",
+        "expected": "401; no catalog data returned.",
+        "evidence": "API:rejects unauthenticated"
+      },
+      {
+        "id": "SEC-02",
+        "scenario": "Forged origin and missing client header",
+        "preconditions": "Public login mutation.",
+        "steps": "Send without client header or with untrusted Origin.",
+        "expected": "403 before login processing.",
+        "evidence": "API:rejects unauthenticated"
+      },
+      {
+        "id": "SEC-03",
+        "scenario": "Cookie and response protections",
+        "preconditions": "Successful staff login.",
+        "steps": "Inspect set-cookie and response body.",
+        "expected": "HttpOnly, SameSite=Strict; no password hash.",
+        "evidence": "API:rejects unauthenticated"
+      },
+      {
+        "id": "SEC-04",
+        "scenario": "Login throttling",
+        "preconditions": "Nonexistent identity.",
+        "steps": "Repeat incorrect login beyond limit.",
+        "expected": "429 after configured threshold.",
+        "evidence": "API:login and code-request"
+      },
+      {
+        "id": "SEC-05",
+        "scenario": "Catalog user-data minimization",
+        "preconditions": "Manager and staff API contexts.",
+        "steps": "Compare catalog user projections.",
+        "expected": "No hashes/token versions; staff sees active verified members without emails.",
+        "evidence": "API:login and code-request"
+      },
+      {
+        "id": "SEC-06",
+        "scenario": "Privilege-field injection",
+        "preconditions": "Staff cookie and receipt payload.",
+        "steps": "Add status=DONE to creation request.",
+        "expected": "400; client cannot force posting.",
+        "evidence": "API:rejects unauthenticated"
+      },
+      {
+        "id": "SEC-07",
+        "scenario": "Database reset guard",
+        "preconditions": "Disposable test environment configuration.",
+        "steps": "Review test runners, then run with a non-test DB URL in a separate safe environment.",
+        "expected": "Runner refuses reset before any destructive SQL.",
+        "evidence": null
+      },
+      {
+        "id": "SEC-08",
+        "scenario": "Backup and restore drill",
+        "preconditions": "Disposable clone; PostgreSQL tools.",
+        "steps": "Dump test DB, restore to isolated clone, compare counts and ledger sums.",
+        "expected": "Restore reproduces all stock and history.",
+        "evidence": null
+      },
+      {
+        "id": "SEC-09",
+        "scenario": "Process restart persistence",
+        "preconditions": "Disposable test deployment.",
+        "steps": "Post movement; restart API/database; reload.",
+        "expected": "Previously posted stock/history remain intact.",
+        "evidence": null
+      },
+      {
+        "id": "SEC-10",
+        "scenario": "Concurrent high-load soak",
+        "preconditions": "Disposable environment and defined workload.",
+        "steps": "Run sustained multiuser load with receipts, reservations and counts.",
+        "expected": "No negative availability, lost postings or ledger mismatch; latency measured.",
+        "evidence": null
+      },
+      {
+        "id": "SEC-11",
+        "scenario": "Firefox/Safari/Edge compatibility",
+        "preconditions": "Installed target browsers.",
+        "steps": "Repeat full auth and inventory happy paths.",
+        "expected": "Equivalent behavior in each target browser.",
+        "evidence": null
+      },
+      {
+        "id": "SEC-12",
+        "scenario": "Public deployment controls",
+        "preconditions": "Separate HTTPS deployment.",
+        "steps": "Review secure cookies, TLS termination, network isolation, secrets, monitoring and recovery.",
+        "expected": "Deployment-specific controls validated before public use.",
+        "evidence": null
+      }
+    ]
+  }
+]

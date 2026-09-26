@@ -7,6 +7,15 @@ import { twMerge } from 'tailwind-merge';
 import { AlertCircle, ArrowLeft, ArrowRight, Check, Inbox, LoaderCircle, X } from 'lucide-react';
 import { statusNames } from '../types';
 export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
+const ModalCloseContext = React.createContext<() => void>(() => {});
+export function ModalCancel() {
+  const close = React.useContext(ModalCloseContext);
+  return (
+    <Button type="button" variant="secondary" onClick={close}>
+      Cancel
+    </Button>
+  );
+}
 const buttonVariants = cva('btn', {
   variants: {
     variant: {
@@ -79,26 +88,57 @@ export function Modal({
   children,
   onClose,
   wide = false,
+  dirty = false,
+  busy = false,
 }: {
   title: string;
   description?: string;
   children: React.ReactNode;
   onClose: () => void;
   wide?: boolean;
+  dirty?: boolean;
+  busy?: boolean;
 }) {
+  const descriptionId = React.useId();
+  const content = React.useRef<HTMLDivElement>(null);
+  const [discard, setDiscard] = React.useState(false);
+  const close = () => {
+    if (busy) return;
+    if (dirty) setDiscard(true);
+    else onClose();
+  };
+  React.useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty]);
   return (
-    <Dialog.Root open onOpenChange={(open) => !open && onClose()}>
+    <Dialog.Root open onOpenChange={(open) => !open && close()}>
       <Dialog.Portal>
         <Dialog.Overlay className="modal-overlay" />
         <Dialog.Content
+          ref={content}
+          onOpenAutoFocus={(event) => {
+            const first = content.current?.querySelector<HTMLElement>(
+              'input:not([type=hidden]),select,textarea',
+            );
+            if (first) {
+              event.preventDefault();
+              first.focus();
+            }
+          }}
           className={cn('modal', wide && 'modal-wide')}
-          aria-describedby={description ? 'modal-description' : undefined}
+          aria-describedby={description ? descriptionId : undefined}
         >
           <div className="modal-heading">
             <div>
               <Dialog.Title>{title}</Dialog.Title>
               {description && (
-                <Dialog.Description id="modal-description">{description}</Dialog.Description>
+                <Dialog.Description id={descriptionId}>{description}</Dialog.Description>
               )}
             </div>
             <Dialog.Close asChild>
@@ -107,7 +147,21 @@ export function Modal({
               </Button>
             </Dialog.Close>
           </div>
-          {children}
+          <ModalCloseContext.Provider value={close}>{children}</ModalCloseContext.Provider>
+          {discard && (
+            <div className="discard-warning" role="alert">
+              <strong>Discard unsaved changes?</strong>
+              <p>Your changes have not been saved.</p>
+              <div>
+                <Button variant="secondary" onClick={() => setDiscard(false)}>
+                  Keep editing
+                </Button>
+                <Button variant="danger" onClick={onClose}>
+                  Discard changes
+                </Button>
+              </div>
+            </div>
+          )}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

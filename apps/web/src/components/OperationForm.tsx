@@ -11,7 +11,7 @@ import {
 import { useWorkspace, OperationDraft } from '../lib/context';
 import { api, localDateTime, refresh } from '../lib/api';
 import { Kind, kindNames, Operation, units } from '../types';
-import { Button, ErrorBox, Field, Modal } from './ui';
+import { Button, ErrorBox, Field, Modal, ModalCancel } from './ui';
 const icons = {
   RECEIPT: ArrowDownToLine,
   DELIVERY: ArrowUpFromLine,
@@ -49,6 +49,7 @@ export function OperationForm({
   const [reason, setReason] = useState(existing?.reason || '');
   const [address, setAddress] = useState(existing?.deliveryAddress || '');
   const [error, setError] = useState('');
+  const [dirty, setDirty] = useState(false);
   const mutation = useMutation({
     mutationFn: (body: unknown) =>
       api<Operation>(
@@ -113,9 +114,11 @@ export function OperationForm({
       title={existing ? `Edit ${existing.reference}` : `New ${kindNames[type].toLowerCase()}`}
       description="Save a draft first. Stock changes only when you validate."
       onClose={onClose}
+      dirty={dirty}
+      busy={mutation.isPending}
       wide
     >
-      <form onSubmit={submit}>
+      <form onSubmit={submit} onChangeCapture={() => setDirty(true)}>
         <div className="modal-body">
           <ErrorBox error={error || mutation.error} />
           {!existing && (
@@ -191,11 +194,13 @@ export function OperationForm({
             </Field>
             <Field label="Responsible">
               <select value={responsibleId} onChange={(e) => setResponsible(e.target.value)}>
-                {catalog.users.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name}
-                  </option>
-                ))}
+                {catalog.users
+                  .filter((u) => u.status === 'ACTIVE' && u.emailVerifiedAt)
+                  .map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name}
+                    </option>
+                  ))}
               </select>
             </Field>
             {type === 'ADJUSTMENT' && (
@@ -312,9 +317,7 @@ export function OperationForm({
           </Field>
         </div>
         <div className="modal-footer">
-          <Button variant="secondary" type="button" onClick={onClose}>
-            Cancel
-          </Button>
+          <ModalCancel />
           <Button type="submit" disabled={mutation.isPending}>
             {mutation.isPending ? 'Saving…' : existing ? 'Save changes' : 'Create draft'}
           </Button>

@@ -38,7 +38,7 @@ export class CatalogService {
       return tx.contact.update({ where: { id }, data: { ...dto, name: dto.name.trim() } });
     });
   }
-  async all() {
+  async all(actor?: Actor) {
     const [products, categories, warehouses, locations, contacts, users, rules] =
       await this.db.$transaction([
         this.db.product.findMany({
@@ -53,7 +53,16 @@ export class CatalogService {
         this.db.location.findMany({ include: { warehouse: true }, orderBy: { name: 'asc' } }),
         this.db.contact.findMany({ orderBy: { name: 'asc' } }),
         this.db.user.findMany({
-          select: { id: true, name: true, role: true },
+          where:
+            actor?.role === 'MANAGER' ? {} : { status: 'ACTIVE', emailVerifiedAt: { not: null } },
+          select: {
+            id: true,
+            name: true,
+            role: true,
+            status: true,
+            emailVerifiedAt: true,
+            ...(actor?.role === 'MANAGER' ? { email: true } : {}),
+          },
           orderBy: { name: 'asc' },
         }),
         this.db.reorderRule.findMany({
@@ -63,6 +72,8 @@ export class CatalogService {
     return { products, categories, warehouses, locations, contacts, users, rules };
   }
   async product(dto: ProductDto, actor: Actor, id?: string) {
+    if (dto.active === false && dto.initialStock)
+      throw new BadRequestException('An archived product cannot have opening stock.');
     if (id && (dto.initialStock !== undefined || dto.locationId))
       throw new BadRequestException('Use an adjustment to change existing stock.');
     if (dto.unit === 'PCS' && dto.initialStock && !Number.isInteger(dto.initialStock))
@@ -114,7 +125,7 @@ export class CatalogService {
     if (dto.target < dto.minimum)
       throw new BadRequestException('Target quantity must be at least the minimum.');
     const product = await this.db.product.findUnique({ where: { id: dto.productId } });
-    if (!product) throw new BadRequestException('Product not found.');
+    if (!product || !product.active) throw new BadRequestException('Choose an active product.');
     if (product.unit === 'PCS' && (!Number.isInteger(dto.minimum) || !Number.isInteger(dto.target)))
       throw new BadRequestException('Use whole quantities for piece-based products.');
     return this.db.reorderRule.upsert({

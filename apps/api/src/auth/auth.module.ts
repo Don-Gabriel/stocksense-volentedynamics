@@ -1,10 +1,19 @@
-import { Body, Controller, Get, Module, Patch, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Module, Param, Patch, Post, Req, Res } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import type { Response } from 'express';
-import { AuthGuard, AuthRequest, Public } from './auth.guard';
+import { AuthGuard, AuthRequest, Manager, Public } from './auth.guard';
 import { AuthService } from './auth.service';
-import { ForgotDto, LoginDto, ProfileDto, RegisterDto, ResetDto } from './auth.dto';
+import {
+  AccessDto,
+  ForgotDto,
+  LoginDto,
+  ProfileDto,
+  RegisterDto,
+  ResetDto,
+  VerifyDto,
+} from './auth.dto';
+import { MailService } from './mail.service';
 import { Database } from '../common/database';
 
 @Controller('auth')
@@ -27,9 +36,7 @@ class AuthController {
     @Req() req: AuthRequest,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const session = await this.auth.register(dto, req.ip || 'local');
-    this.cookie(res, session.token);
-    return session.user;
+    return this.auth.register(dto, req.ip || 'local');
   }
   @Public() @Post('login') async login(
     @Body() dto: LoginDto,
@@ -61,6 +68,19 @@ class AuthController {
   @Public() @Post('reset-password') reset(@Body() dto: ResetDto, @Req() req: AuthRequest) {
     return this.auth.reset(dto, req.ip || 'local');
   }
+  @Public() @Post('verify-email') verify(@Body() dto: VerifyDto, @Req() req: AuthRequest) {
+    return this.auth.verify(dto, req.ip || 'local');
+  }
+  @Public() @Post('resend-verification') resend(@Body() dto: ForgotDto, @Req() req: AuthRequest) {
+    return this.auth.resend(dto, req.ip || 'local');
+  }
+  @Manager() @Patch('users/:id/access') access(
+    @Param('id') id: string,
+    @Body() dto: AccessDto,
+    @Req() req: AuthRequest,
+  ) {
+    return this.auth.access(id, dto, req.user);
+  }
 }
 @Module({
   imports: [
@@ -69,7 +89,7 @@ class AuthController {
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, { provide: APP_GUARD, useClass: AuthGuard }],
+  providers: [AuthService, MailService, { provide: APP_GUARD, useClass: AuthGuard }],
   exports: [AuthService],
 })
 export class AuthModule {}

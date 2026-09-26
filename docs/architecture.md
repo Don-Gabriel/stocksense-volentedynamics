@@ -11,24 +11,24 @@ flowchart LR
     Catalog --> DB
     Reports --> DB
     Auth --> DB
-    Auth -->|Local SMTP| Mailpit[Mailpit test inbox]
+    Auth -->|SMTP| Email[Gmail or local Mailpit inbox]
 ```
 
 The frontend calls the API through Vite’s local proxy. Database access and inventory decisions happen on the server. There are no browser-side stock balances or mock API responses.
 
 ## Data model
 
-| Record                    | Purpose                                                                            |
-| ------------------------- | ---------------------------------------------------------------------------------- |
-| User / PasswordReset      | Roles, account details, token revocation version, expiring hashed reset challenges |
-| Product / Category        | Unique SKU, unit, unit cost, active status, product group                          |
-| Warehouse / Location      | A warehouse and its named storage areas                                            |
-| Contact                   | A supplier or customer                                                             |
-| Operation / OperationLine | A receipt, delivery, transfer, or adjustment document and its product quantities   |
-| StockBalance              | Current physical quantity and revision for one product at one location             |
-| Reservation               | Quantity committed to a ready outgoing document line                               |
-| LedgerEntry               | Signed movement, before/after balance, document line, user, and timestamp          |
-| ReorderRule               | Minimum available quantity and target per product/location                         |
+| Record                    | Purpose                                                                                                 |
+| ------------------------- | ------------------------------------------------------------------------------------------------------- |
+| User / PasswordReset      | Roles, pending/active/disabled access, verified email, session version, purpose-bound hashed challenges |
+| Product / Category        | Unique SKU, unit, unit cost, active status, product group                                               |
+| Warehouse / Location      | A warehouse and its named storage areas                                                                 |
+| Contact                   | A supplier or customer                                                                                  |
+| Operation / OperationLine | A receipt, delivery, transfer, or adjustment document and its product quantities                        |
+| StockBalance              | Current physical quantity and revision for one product at one location                                  |
+| Reservation               | Quantity committed to a ready outgoing document line                                                    |
+| LedgerEntry               | Signed movement, before/after balance, document line, user, and timestamp                               |
+| ReorderRule               | Minimum available quantity and target per product/location                                              |
 
 Quantities use PostgreSQL decimals with three fractional digits; costs use two. Whole-piece products reject fractional quantities. The interface does not total quantities across unrelated units.
 
@@ -56,6 +56,8 @@ Operations reserve all lines or none. Serializable transactions prevent competin
 
 Session JWTs live in HttpOnly, SameSite=Strict cookies, scoped to `/api`. Every mutation requires the app’s custom header and validates any supplied Origin. Nest validates and rejects extra DTO fields. Authentication checks the database token version on every request. Manager-only routes enforce authorization on the server; hiding a button is only a usability choice.
 
-Auth endpoints use local process rate limits. Password reset challenges are hashed, expire in ten minutes, have a five-attempt limit, and are consumed on success. Email capture stays on loopback. This is a single local workspace suitable for a hackathon demonstration; a public production service would require additional deployment, account-administration, monitoring, and recovery work.
+Auth endpoints use local process rate limits. Challenges are HMAC-hashed with user and purpose, expire in ten minutes, allow five attempts, and are consumed on success. Resending consumes earlier challenges and enforces a cooldown. Failed SMTP delivery consumes its unusable challenge so the user can recover by resending. Signup creates an unverified pending staff account without a session; email verification plus manager approval are required. Manager role/status changes increment the session version, and all protected requests require an active verified account.
+
+Local email capture stays on loopback. External email uses configured SMTP with TLS and sanitized error messages; Gmail app passwords are entered locally into an ignored environment file. Automated tests force local mode. This is a single local workspace suitable for a hackathon demonstration; a public production service would require additional deployment, monitoring, recovery, and distributed rate-limit controls.
 
 The direct database and local test scripts use explicit hostname, port, and database-name guards. Only the disposable test database is reset by tests. The application seed skips an existing database.

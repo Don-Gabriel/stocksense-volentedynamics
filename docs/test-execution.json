@@ -1,0 +1,394 @@
+{
+  "generatedAt": "26 September 2026, 12:01 IST",
+  "codeFingerprint": "e6f5aac8d59d6720f586fbbf685aea26a99b1113296f2a5b4f88003ceaa1ce95",
+  "caseCounts": {
+    "PASS": 136,
+    "FAIL": 0,
+    "NOT RUN": 15
+  },
+  "testCounts": {
+    "API": 33,
+    "UI": 14
+  },
+  "apiRunStartedAt": "2026-09-26T06:22:25.206000+00:00",
+  "browserRunStartedAt": "2026-09-26T06:29:45.046Z",
+  "externalEmail": "Not configured or externally verified at this review",
+  "tests": [
+    {
+      "id": "API-01",
+      "kind": "API",
+      "name": "receipt posts only on validation; concurrent repeat validation is idempotent",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 111
+    },
+    {
+      "id": "API-02",
+      "kind": "API",
+      "name": "competing deliveries cannot reserve the same stock; cancellation releases it",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 106
+    },
+    {
+      "id": "API-03",
+      "kind": "API",
+      "name": "delivery requires pick then pack and posts the outgoing quantity once",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 80
+    },
+    {
+      "id": "API-04",
+      "kind": "API",
+      "name": "transfers conserve total stock and write both locations in the ledger",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 58
+    },
+    {
+      "id": "API-05",
+      "kind": "API",
+      "name": "a short multi-line operation reserves none of its products",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 70
+    },
+    {
+      "id": "API-06",
+      "kind": "API",
+      "name": "counts record a signed delta, support zero, and reject stale snapshots",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 114
+    },
+    {
+      "id": "API-07",
+      "kind": "API",
+      "name": "an adjustment conflicting with reservations rolls every line back",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 89
+    },
+    {
+      "id": "API-08",
+      "kind": "API",
+      "name": "supports decimal units without accepting fractional pieces",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 55
+    },
+    {
+      "id": "API-09",
+      "kind": "API",
+      "name": "opening stock and replenishment rules use the same recorded balances",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 14
+    },
+    {
+      "id": "API-10",
+      "kind": "API",
+      "name": "rejects unauthenticated, forged-origin, extra-field, and manager-only requests",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 72
+    },
+    {
+      "id": "API-11",
+      "kind": "API",
+      "name": "signup creates staff and enforces username, email, and password rules",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 732
+    },
+    {
+      "id": "API-12",
+      "kind": "API",
+      "name": "OTP is one-time, has a retry limit, and revokes old sessions",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 1410
+    },
+    {
+      "id": "API-13",
+      "kind": "API",
+      "name": "expired reset challenges cannot change a password",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 282
+    },
+    {
+      "id": "API-14",
+      "kind": "API",
+      "name": "sends a usable reset code through local SMTP without exposing it in the API",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 521
+    },
+    {
+      "id": "API-15",
+      "kind": "API",
+      "name": "protects historical product units, warehouse ownership, and contact types",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 38
+    },
+    {
+      "id": "API-16",
+      "kind": "API",
+      "name": "email verification, manager approval, role changes, and disabling enforce access",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 2229
+    },
+    {
+      "id": "API-17",
+      "kind": "API",
+      "name": "verification codes enforce expiry, purpose separation, five attempts, resend delay, and replacement",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 2181
+    },
+    {
+      "id": "API-18",
+      "kind": "API",
+      "name": "SMTP failures do not activate accounts and permit recovery by resending",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 283
+    },
+    {
+      "id": "API-19",
+      "kind": "API",
+      "name": "login and code-request rate limits apply without leaking passwords or codes",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 21
+    },
+    {
+      "id": "API-20",
+      "kind": "API",
+      "name": "invalid quantities, line collections, dates, foreign IDs, and extra fields reject atomically",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 88
+    },
+    {
+      "id": "API-21",
+      "kind": "API",
+      "name": "draft edits are atomic, retain reference, and cannot change operation type",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 34
+    },
+    {
+      "id": "API-22",
+      "kind": "API",
+      "name": "archived products and inactive responsible users cannot enter new operations",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 9
+    },
+    {
+      "id": "API-23",
+      "kind": "API",
+      "name": "canceled operations never post stock and cannot be revived",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 24
+    },
+    {
+      "id": "API-24",
+      "kind": "API",
+      "name": "concurrent cancellation and validation end in one consistent state",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 49
+    },
+    {
+      "id": "API-25",
+      "kind": "API",
+      "name": "cross-warehouse transfers preserve global quantity and warehouse reports",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 66
+    },
+    {
+      "id": "API-26",
+      "kind": "API",
+      "name": "reorder rules validate units and thresholds and update without duplicates",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 56
+    },
+    {
+      "id": "API-27",
+      "kind": "API",
+      "name": "case-insensitive searches, pagination, ledger filters, and invalid filter values behave consistently",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 116
+    },
+    {
+      "id": "API-28",
+      "kind": "API",
+      "name": "catalog uniqueness, input validation, profile updates, and protected history are enforced over HTTP",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 48
+    },
+    {
+      "id": "API-29",
+      "kind": "API",
+      "name": "positive and unchanged counts complete with the correct signed delta",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 82
+    },
+    {
+      "id": "API-30",
+      "kind": "API",
+      "name": "a short transfer waits and cancellation releases its later reservation",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 85
+    },
+    {
+      "id": "API-31",
+      "kind": "API",
+      "name": "catalog settings can be edited and empty archived products can be reactivated",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 55
+    },
+    {
+      "id": "API-32",
+      "kind": "API",
+      "name": "the ledger reconciles exactly with every persisted balance",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 10
+    },
+    {
+      "id": "API-33",
+      "kind": "API",
+      "name": "dashboard counts a low-stock product once across multiple locations",
+      "status": "passed",
+      "source": "apps/api/test/inventory.spec.ts",
+      "durationMs": 67
+    },
+    {
+      "id": "UI-01",
+      "kind": "UI",
+      "name": "signup, email verification, approval, password reset, and revocation through the UI",
+      "status": "passed",
+      "source": "tests/quality.spec.ts:20",
+      "durationMs": 7120
+    },
+    {
+      "id": "UI-02",
+      "kind": "UI",
+      "name": "invalid authentication input, password visibility, mismatch, and reset errors",
+      "status": "passed",
+      "source": "tests/quality.spec.ts:79",
+      "durationMs": 1421
+    },
+    {
+      "id": "UI-03",
+      "kind": "UI",
+      "name": "catalog setup, editing, opening balances, archive protection, and profile update",
+      "status": "passed",
+      "source": "tests/quality.spec.ts:109",
+      "durationMs": 8440
+    },
+    {
+      "id": "UI-04",
+      "kind": "UI",
+      "name": "draft edits, duplicate products, unsaved-change recovery, and cancellation",
+      "status": "passed",
+      "source": "tests/quality.spec.ts:177",
+      "durationMs": 2878
+    },
+    {
+      "id": "UI-05",
+      "kind": "UI",
+      "name": "filtered list return, persistent kanban, warehouse scope, safe dates, and not-found navigation",
+      "status": "passed",
+      "source": "tests/quality.spec.ts:216",
+      "durationMs": 3411
+    },
+    {
+      "id": "UI-06",
+      "kind": "UI",
+      "name": "keyboard navigation, mobile drawer, form focus, and responsive widths",
+      "status": "passed",
+      "source": "tests/quality.spec.ts:244",
+      "durationMs": 3641
+    },
+    {
+      "id": "UI-07",
+      "kind": "UI",
+      "name": "network errors retain forms and allow a successful retry",
+      "status": "passed",
+      "source": "tests/quality.spec.ts:271",
+      "durationMs": 2253
+    },
+    {
+      "id": "UI-08",
+      "kind": "UI",
+      "name": "shortage recovery, pick-pack delivery, and printable completed document",
+      "status": "passed",
+      "source": "tests/quality.spec.ts:292",
+      "durationMs": 1886
+    },
+    {
+      "id": "UI-09",
+      "kind": "UI",
+      "name": "reordering rules, replenishment suggestions, and empty-product archiving",
+      "status": "passed",
+      "source": "tests/quality.spec.ts:355",
+      "durationMs": 4687
+    },
+    {
+      "id": "UI-10",
+      "kind": "UI",
+      "name": "automated WCAG checks cover authentication, dashboard, tables, settings, and modal",
+      "status": "passed",
+      "source": "tests/quality.spec.ts:403",
+      "durationMs": 5951
+    },
+    {
+      "id": "UI-11",
+      "kind": "UI",
+      "name": "global search, overdue quick filter, and dashboard warehouse changes",
+      "status": "passed",
+      "source": "tests/quality.spec.ts:436",
+      "durationMs": 2194
+    },
+    {
+      "id": "UI-12",
+      "kind": "UI",
+      "name": "full receipt \u2192 delivery \u2192 transfer \u2192 count flow remains consistent after reload",
+      "status": "passed",
+      "source": "tests/workflows.spec.ts:9",
+      "durationMs": 9046
+    },
+    {
+      "id": "UI-13",
+      "kind": "UI",
+      "name": "search, filters, kanban, settings, and mobile navigation",
+      "status": "passed",
+      "source": "tests/workflows.spec.ts:84",
+      "durationMs": 4907
+    },
+    {
+      "id": "UI-14",
+      "kind": "UI",
+      "name": "staff cannot edit catalog or create physical counts",
+      "status": "passed",
+      "source": "tests/workflows.spec.ts:123",
+      "durationMs": 2625
+    }
+  ]
+}

@@ -10,7 +10,7 @@ An inventory workspace built by Volente Dynamics. Receive stock, reserve it for 
 - TanStack Query, React Hook Form, Zod
 - NestJS 11, Prisma 6, PostgreSQL 18
 - HttpOnly session cookies, signed JWTs, bcrypt password hashes
-- Nodemailer and Mailpit for local password reset email
+- Nodemailer for Gmail SMTP or a local Mailpit test inbox
 - Jest, Supertest, and Playwright
 
 ## Start on Windows
@@ -39,15 +39,28 @@ Open [StockSense](http://127.0.0.1:5173). The API listens on `127.0.0.1:3001`. S
 
 On later launches, run `npm run local:start` followed by `npm run dev`. Stop the development servers with Ctrl+C, then run `npm run local:stop` to stop the project’s database and Mailpit. Do not delete `.local/postgres` if you want to keep your inventory data. Back it up with PostgreSQL’s `pg_dump` before transferring the workspace.
 
-### Password reset email
+### Email verification and password reset
 
 [Mailpit’s local inbox](http://127.0.0.1:8025) captures messages sent through local SMTP port 1025. Use `manager@stocksense.local` or `warehouse@stocksense.local` for the seeded accounts. Codes expire after 10 minutes, allow five attempts, and can be used once. Successful reset revokes previous sessions.
 
-**Local messages do not reach external inboxes.** This makes the complete reset flow demonstrable without buying email service or supplying real email credentials. Mailpit binds to loopback and its installer verifies the official download’s SHA-256 checksum.
+**Local messages do not reach external inboxes.** Mailpit binds to loopback and its installer verifies the official download's SHA-256 checksum. Automated tests always force local email mode, even when Gmail is configured for the demo.
+
+New accounts start as unverified, pending staff. Signup sends a verification code, without creating a session. The user enters the code and their account password, then a manager approves access in **Settings > Team**. The manager can disable accounts or change roles; each change ends their existing sessions. A manager cannot change their own access, and the server preserves an active manager. The two synthetic seeded accounts are preverified; real accounts are not.
+
+For real Gmail delivery at no added service cost, run this locally and enter a Gmail address plus its app password at the hidden prompt. Never put these credentials in chat or GitHub:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/configure-gmail.ps1
+node scripts/check-email.cjs
+```
+
+Restart `npm run dev` afterward. The connection checker tests SMTP authentication without sending a message. Then sign up with a real recipient address and complete verification to test inbox delivery. Check spam if necessary. Ordinary Gmail passwords will not work; see [Google's app-password instructions](https://support.google.com/mail/answer/185833?hl=en). App passwords require 2-Step Verification and may be unavailable under account restrictions. Gmail's normal sending limits apply. StockSense does not purchase a plan or enable billing.
+
+The script sets `MAIL_MODE=smtp`, `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=465`, and `SMTP_SECURE=true` in the ignored API environment file. SMTP credentials stay on the API. External STARTTLS connections require TLS; certificate verification stays enabled. See [Nodemailer's SMTP documentation](https://nodemailer.com/smtp). Set `MAIL_MODE=local` and restart to return to the test inbox. If signup reports a mail failure after creating an account, choose **Verify an existing account** on the sign-in page and resend the code after fixing the sender.
 
 ## What works
 
-- Signup, login, logout, profile editing, and OTP password reset
+- Signup with email verification and manager approval, login, logout, profile editing, OTP password reset, and team access management
 - Manager-maintained products, categories, contacts, warehouses, storage locations, and reordering rules
 - Opening stock recorded as an adjustment; units in pieces, kilograms, litres, or metres
 - Live on-hand, reserved, and available quantities per product and location
@@ -57,7 +70,7 @@ On later launches, run `npm run local:start` followed by `npm run dev`. Stop the
 - Pick and pack steps for deliveries, printable completed documents
 - Dashboard counts, overdue operations, low-stock alerts, replenishment suggestions, and recent activity
 - Permanent signed movement history with before/after quantities and the validating user
-- Responsive navigation and tables
+- Locally hosted Inter typography, larger controls, fixed navigation and account actions, keyboard-accessible mobile drawer, persistent filters and Kanban view, breadcrumbs, and unsaved-form warnings
 
 ## Inventory rules
 
@@ -67,7 +80,7 @@ Transfers debit the source and credit the destination in one database transactio
 
 All movement posting and reservations use serializable transactions with bounded conflict retries. A repeated validation request cannot apply stock twice. Completed documents cannot be edited or canceled. The ledger has no edit or delete API. Database constraints enforce nonnegative balances and ledger arithmetic. Available stock is `on hand − reserved`.
 
-Managers maintain the catalog and adjustments. Staff can receive, deliver, and transfer goods. Newly registered accounts are staff; signup cannot grant manager permissions.
+Managers maintain the catalog, team access, and adjustments. Staff can receive, deliver, and transfer goods. Newly registered accounts are pending staff; signup cannot grant manager permissions or inventory access.
 
 ## Verify
 
@@ -83,7 +96,9 @@ npm run test:e2e
 
 Run API tests and browser tests **sequentially**. Both use `stocksense_test` on local port 55432 and reset only that named test database. URL guards reject development databases and remote hosts. Browser tests start their own API on port 3002 and frontend on 5174; they do not alter the demo inventory. Build the API before browser tests after any backend change.
 
-API tests cover concurrency, repeat validation, stock reservations, transfers, decimal units, stale counts, rollback, roles, CSRF checks, signup, reset codes, and ledger reconciliation. Browser tests cover the complete inventory lifecycle, filters, Kanban, mobile navigation, and staff permissions.
+API tests cover concurrency, repeat validation, stock reservations, transfers, decimal units, stale counts, rollback, roles, CSRF checks, email verification, access approval/revocation, mail failure recovery, rate limits, input boundaries, reset codes, and ledger reconciliation. Browser tests cover authentication through approval and reset, catalog setup, inventory lifecycle, draft editing and cancellation, filters, Kanban, network recovery, mobile/keyboard navigation, staff permissions, and automated WCAG checks. Tests produce local reports; see `docs/quality-review.md` for scope and limitations.
+
+The reviewed test catalog contains **151 scenarios**. The recorded run passed **33 API tests and 14 browser tests**, covering 136 catalog scenarios; 15 manual checks remain explicitly unexecuted. `docs/test-case-catalog.json` holds the steps and expected results, and `docs/test-execution.json` records the executed test names and source fingerprint. To regenerate the tabular PDF after a fresh run, capture API results with `npm run test -w @stocksense/api -- --json --outputFile=../../.local/api-test-results.json`, run browser tests, then use `python scripts/build_test_document.py --output <report.pdf>` with the free ReportLab package installed.
 
 `npm run dev` recompiles API source on changes and serves the UI with hot reload. To inspect production output locally, run `npm run build`, then `npm run start -w @stocksense/api` and `npm run preview -w @stocksense/web -- --port 5173`. This local HTTP workflow uses development cookie settings; an actual HTTPS deployment requires its own secure configuration.
 
