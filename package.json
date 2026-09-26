@@ -1,0 +1,34 @@
+{
+  "name": "stocksense",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c cyan,yellow \"npm run dev -w @stocksense/api\" \"npm run dev -w @stocksense/web\"",
+    "build": "npm run build --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "db:generate": "npm run db:generate -w @stocksense/api",
+    "db:migrate": "npm run db:migrate -w @stocksense/api",
+    "db:seed": "npm run db:seed -w @stocksense/api",
+    "test": "npm run test -w @stocksense/api",
+    "test:e2e": "npm run build -w @stocksense/api && playwright test",
+    "local:setup": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/local-setup.ps1",
+    "local:start": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/local-start.ps1",
+    "local:stop": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/local-stop.ps1",
+    "format": "prettier --write apps scripts tests docs *.json *.ts *.md"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0",
+    "concurrently": "^9.2.0",
+    "prettier": "^3.9.9"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "overrides": {
+    "deepmerge-ts": "8.0.2"
+  }
+}

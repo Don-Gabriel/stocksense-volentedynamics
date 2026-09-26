@@ -1,0 +1,10 @@
+node_modules
+dist
+.local
+.claude-flow
+.swarm
+package-lock.json
+StockSense-analysis.md
+playwright-report
+test-results
+coverage
