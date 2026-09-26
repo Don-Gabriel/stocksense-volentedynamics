@@ -1133,6 +1133,7 @@ group('SEC Security and operational checks', [
     'Deployment-specific controls validated before public use.',
   ],
 ]);
+require('./test-navigation.cjs').applyNavigation(groups);
 module.exports = groups;
 if (require.main === module) {
   const fs = require('node:fs');
